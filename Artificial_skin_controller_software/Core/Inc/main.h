@@ -1,25 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
 
@@ -27,45 +5,69 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+// TODO HARDWARE zrobić i pobawić się z hardware USB, a nie przez CP2102
+// TODO Ustlić priorytety przerwań w main h
 
-/* USER CODE END Includes */
+enum {
+    err_OK                           = 0x00,
+    err_other                        = 0x01,
+    err_wtf                          = 0x02,
+    err_no_tactile_config            = 0x10,
+    err_no_config                    = 0xA0,
+    err_try_to_get_outside_of_memory = 0xA1,
+};
 
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
+// #define WATCHDOG_ON
 
-/* USER CODE END ET */
+#define SYS_CLK 32000000U
+#define ADC_CLK 8000000U
 
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
+#define EEPROM_START 0x08000000
+#define EEPROM_END 0x08020000
+#define EEPROM_FIELD_CONFIG_START 0x08018000
+#define EEPROM_PAGE_SIZE 0x00000400
+#define EEPROM_FIELD_PAGES 2 // 16x16x8 = 2048 (rows x columns x bytes)
+#define EEPROM_FIELD_SIZE 8
+#define EEPROM_VARIABLE_SIZE 4
+#define EEPROM_ADDRESS(start, number, size) ((start) + ((number) * (size))
 
-/* USER CODE END EC */
 
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
+#define TIM_UTIL_Handler htim1
+#define TIM_UTIL_FREQ 10
+#define TIM_UTIL_Instance TIM1
 
-/* USER CODE END EM */
+#define NR_OF_KEYS 16
+#define NR_OF_SIGNALS 16
+#define AVERAGE_BUFFER_SIZE 2
 
-/* Exported functions prototypes ---------------------------------------------*/
-void Error_Handler(void);
 
-/* USER CODE BEGIN EFP */
+#define TACT_HYPERBOLA_MEASURE_PAR1 600.0f // y shift
+#define TACT_HYPERBOLA_MEASURE_PAR2 2500000.0f // hyperbolic parameter
+#define TACT_HYPERBOLA_MEASURE_PAR3 (-750.0f) // x shift
 
-/* USER CODE END EFP */
+#define TACT_FORCE_DIVIDER 100.0f
+#define TACT_IGNORANCE_LIMIT 3900 // 3800 na kwadracie
 
-/* Private defines -----------------------------------------------------------*/
-/* USER CODE BEGIN Private defines */
+#define TACT_MEASURE(raw_analog) (uint16_t) (TACT_HYPERBOLA_MEASURE_PAR3 + \
+                    (TACT_HYPERBOLA_MEASURE_PAR2 / ((raw_analog) - TACT_HYPERBOLA_MEASURE_PAR1)))
 
-/* USER CODE END Private defines */
+
+typedef struct {
+    uint8_t  type;
+    uint8_t  remained;
+    uint8_t  key;
+    uint8_t  channel;
+    uint16_t angle;
+    uint16_t distance;
+} TactileField;
+
+
+void Error_Handler();
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

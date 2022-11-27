@@ -1,186 +1,219 @@
-/**
-  ******************************************************************************
-  * File Name          : USART.c
-  * Description        : This file provides code for the configuration
-  *                      of the USART instances.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-
-/* Includes ------------------------------------------------------------------*/
+#include <tim.h>
+#include <gpio.h>
+#include <string.h>
 #include "usart.h"
 
-/* USER CODE BEGIN 0 */
 
-/* USER CODE END 0 */
+UART_HandleTypeDef USB_UART_TypeDef;
 
-UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart3;
+uint8_t uart_rx_timeout_cnt;
+uint8_t uart_rx_flag;
+uint8_t input_buff[UART_IN_BUFF_SIZE];
+uint8_t input_char;
 
-/* USART1 init function */
 
-void MX_USART1_UART_Init(void)
-{
+void usb_uart_Init() {
+    GPIO_InitTypeDef GPIO_InitStruct   = {0};
 
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    USB_UART_CLK_ENABLE;
+    USB_UART_GPIO_CLK_ENABLE;
 
-}
-/* USART3 init function */
-
-void MX_USART3_UART_Init(void)
-{
-
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-}
-
-void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(uartHandle->Instance==USART1)
-  {
-  /* USER CODE BEGIN USART1_MspInit 0 */
-
-  /* USER CODE END USART1_MspInit 0 */
-    /* USART1 clock enable */
-    __HAL_RCC_USART1_CLK_ENABLE();
-  
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**USART1 GPIO Configuration    
-    PA9     ------> USART1_TX
-    PA10     ------> USART1_RX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pin   = USB_UART_TX_Pin;
+    GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(USB_UART_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_10;
+    GPIO_InitStruct.Pin  = USB_UART_RX_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(USB_UART_Port, &GPIO_InitStruct);
+
+#ifdef USB_UART_REMAP
+    __HAL_AFIO_REMAP_USART3_PARTIAL();
+#endif
 
     /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
-  /* USER CODE BEGIN USART1_MspInit 1 */
+    HAL_NVIC_SetPriority(USB_UART_IRQ, 0, 0);
+    HAL_NVIC_EnableIRQ(USB_UART_IRQ);
 
-  /* USER CODE END USART1_MspInit 1 */
-  }
-  else if(uartHandle->Instance==USART3)
-  {
-  /* USER CODE BEGIN USART3_MspInit 0 */
 
-  /* USER CODE END USART3_MspInit 0 */
-    /* USART3 clock enable */
-    __HAL_RCC_USART3_CLK_ENABLE();
-  
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    /**USART3 GPIO Configuration    
-    PC10     ------> USART3_TX
-    PC11     ------> USART3_RX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    USB_UART_TypeDef.Instance          = USB_UART_Instance;
+    USB_UART_TypeDef.Init.BaudRate     = USB_UART_BaudRate;
+    USB_UART_TypeDef.Init.WordLength   = UART_WORDLENGTH_8B;
+    USB_UART_TypeDef.Init.StopBits     = UART_STOPBITS_1;
+    USB_UART_TypeDef.Init.Parity       = UART_PARITY_NONE;
+    USB_UART_TypeDef.Init.Mode         = UART_MODE_TX_RX;
+    USB_UART_TypeDef.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
+    USB_UART_TypeDef.Init.OverSampling = UART_OVERSAMPLING_16;
+    if (HAL_UART_Init(&USB_UART_TypeDef) != HAL_OK) {
+        Error_Handler();
+    }
 
-    GPIO_InitStruct.Pin = GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    __HAL_AFIO_REMAP_USART3_PARTIAL();
-
-    /* USART3 interrupt Init */
-    HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(USART3_IRQn);
-  /* USER CODE BEGIN USART3_MspInit 1 */
-
-  /* USER CODE END USART3_MspInit 1 */
-  }
+    HAL_UART_Receive_IT(&USB_UART_TypeDef, &input_char, 1);
+    uart_rx_flag = 0;
 }
 
-void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
-{
+void usb_send_string(const char *msg) {
+    uint16_t length = strlen((const char *) msg);
+    HAL_UART_Transmit(&USB_UART_TypeDef, (uint8_t *) msg, length, 0xFF);
+}
 
-  if(uartHandle->Instance==USART1)
-  {
-  /* USER CODE BEGIN USART1_MspDeInit 0 */
+void usb_send_whole_sensor() { // TODO
 
-  /* USER CODE END USART1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USART1_CLK_DISABLE();
-  
-    /**USART1 GPIO Configuration    
-    PA9     ------> USART1_TX
-    PA10     ------> USART1_RX 
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
+}
 
-    /* USART1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(USART1_IRQn);
-  /* USER CODE BEGIN USART1_MspDeInit 1 */
+// TODO dodać CRC
 
-  /* USER CODE END USART1_MspDeInit 1 */
-  }
-  else if(uartHandle->Instance==USART3)
-  {
-  /* USER CODE BEGIN USART3_MspDeInit 0 */
+// niech zostanie jak jest:
+// bajt początkowy - 1 bajt
+// komenda - 1 bajt
+// ilość danych - 1 bajt
+// dane
+// CRC, może być MODBUSowe - 2 bajty
 
-  /* USER CODE END USART3_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USART3_CLK_DISABLE();
-  
-    /**USART3 GPIO Configuration    
-    PC10     ------> USART3_TX
-    PC11     ------> USART3_RX 
-    */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_10|GPIO_PIN_11);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    static uint16_t input_buff_len_expected;
+    static uint16_t input_buff_len_cnt;
 
-    /* USART3 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(USART3_IRQn);
-  /* USER CODE BEGIN USART3_MspDeInit 1 */
+    if (huart == &USB_UART_TypeDef) {
+        led_error_on();
 
-  /* USER CODE END USART3_MspDeInit 1 */
-  }
-} 
+        /** Determine starting state of receiving message */
+        if (input_char == USB_START_BYTE && uart_rx_flag == 0) {
+            /** Start bit - begin getting message */
+            uart_rx_flag            = 1;
+            input_buff_len_expected = 0;
+            input_buff_len_cnt      = 0;
+            uart_rx_timeout_cnt     = 0;
+        } else if (uart_rx_flag == 1) {
+            /** Message is during receive */
+            input_buff[input_buff_len_cnt] = input_char;
+            input_buff_len_cnt++;
 
-/* USER CODE BEGIN 1 */
+            if (input_buff_len_cnt == 2) {
+                /** It's second byte of message - data length */
+                input_buff_len_expected = input_char + 4;
+            } else if (input_buff_len_cnt == input_buff_len_expected) {
+                /** End message bit - interpret message */
 
-/* USER CODE END 1 */
+                /** Check CRC */
+                if (get_CRC(input_buff, input_buff_len_expected) == 0) {
+                    message_interpret(input_buff, input_buff_len_expected);
+                }
+                uart_rx_flag = 0;
+            }
+        }
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+        HAL_UART_Receive_IT(&huart3, &input_char, 1);
+        led_error_off();
+    }
+}
+
+void usb_reset_receive() {
+    uart_rx_flag = 0;
+    HAL_UART_Receive_IT(&USB_UART_TypeDef, &input_char, 1);
+}
+
+/**
+ * @brief Function actualize time from start of receive message. Function have to be called only in one place,
+ * preferable by SysTick
+ */
+void uart_check_timeout() {
+    if (uart_rx_flag) {
+        if (++uart_rx_timeout_cnt > UART_TIMEOUT) {
+            usb_reset_receive();
+        }
+    }
+}
+
+uint8_t message_interpret(const uint8_t *buffer, uint8_t length) {
+    UNUSED(length);
+    switch (buffer[USB_MSG_FUNCTION_BYTE]) {
+        // TODO dopisać to
+        case USB_FUNCTION_COMMAND_REQUEST:
+            break;
+        case USB_FUNCTION_COMMAND_ANSWER:
+            break;
+        case USB_FUNCTION_REGISTER_ONE_WRITE:
+            break;
+        case USB_FUNCTION_REGISTER_ONE_READ:
+            break;
+        case USB_FUNCTION_REGISTER_MULTIPLE_WRITE:
+            break;
+        case USB_FUNCTION_REGISTER_MULTIPLE_READ:
+            break;
+        case USB_FUNCTION_REGISTER_ANSWER:
+            break;
+        case USB_FUNCTION_CONFIG_WRITE:
+            break;
+        case USB_FUNCTION_CONFIG_READ:
+            break;
+        case USB_FUNCTION_CONFIG_ANSWER:
+            break;
+        default:
+            break;
+    }
+    return 0;
+}
+
+uint8_t write8_add(uint8_t *buffer) {
+    // Check if we can have place in memory to save config
+    if (field_config_fulfilment >=
+        EEPROM_FIELD_CONFIG_START + (EEPROM_PAGE_SIZE * EEPROM_FIELD_PAGES)) {
+        return 1;
+    }
+
+    // Write to memory
+    uint64_t *ptr = (uint64_t *) buffer;
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, field_config_fulfilment, *ptr);
+    field_config_fulfilment += EEPROM_FIELD_SIZE;
+    return 0;
+}
+
+uint16_t get_CRC(uint8_t *nData, uint8_t wLength) {
+    static const uint16_t wCRCTable[] = {
+            0X0000, 0XC0C1, 0XC181, 0X0140, 0XC301, 0X03C0, 0X0280, 0XC241, //
+            0XC601, 0X06C0, 0X0780, 0XC741, 0X0500, 0XC5C1, 0XC481, 0X0440, //
+            0XCC01, 0X0CC0, 0X0D80, 0XCD41, 0X0F00, 0XCFC1, 0XCE81, 0X0E40, //
+            0X0A00, 0XCAC1, 0XCB81, 0X0B40, 0XC901, 0X09C0, 0X0880, 0XC841, //
+            0XD801, 0X18C0, 0X1980, 0XD941, 0X1B00, 0XDBC1, 0XDA81, 0X1A40, //
+            0X1E00, 0XDEC1, 0XDF81, 0X1F40, 0XDD01, 0X1DC0, 0X1C80, 0XDC41, //
+            0X1400, 0XD4C1, 0XD581, 0X1540, 0XD701, 0X17C0, 0X1680, 0XD641, //
+            0XD201, 0X12C0, 0X1380, 0XD341, 0X1100, 0XD1C1, 0XD081, 0X1040, //
+            0XF001, 0X30C0, 0X3180, 0XF141, 0X3300, 0XF3C1, 0XF281, 0X3240, //
+            0X3600, 0XF6C1, 0XF781, 0X3740, 0XF501, 0X35C0, 0X3480, 0XF441, //
+            0X3C00, 0XFCC1, 0XFD81, 0X3D40, 0XFF01, 0X3FC0, 0X3E80, 0XFE41, //
+            0XFA01, 0X3AC0, 0X3B80, 0XFB41, 0X3900, 0XF9C1, 0XF881, 0X3840, //
+            0X2800, 0XE8C1, 0XE981, 0X2940, 0XEB01, 0X2BC0, 0X2A80, 0XEA41, //
+            0XEE01, 0X2EC0, 0X2F80, 0XEF41, 0X2D00, 0XEDC1, 0XEC81, 0X2C40, //
+            0XE401, 0X24C0, 0X2580, 0XE541, 0X2700, 0XE7C1, 0XE681, 0X2640, //
+            0X2200, 0XE2C1, 0XE381, 0X2340, 0XE101, 0X21C0, 0X2080, 0XE041, //
+            0XA001, 0X60C0, 0X6180, 0XA141, 0X6300, 0XA3C1, 0XA281, 0X6240, //
+            0X6600, 0XA6C1, 0XA781, 0X6740, 0XA501, 0X65C0, 0X6480, 0XA441, //
+            0X6C00, 0XACC1, 0XAD81, 0X6D40, 0XAF01, 0X6FC0, 0X6E80, 0XAE41, //
+            0XAA01, 0X6AC0, 0X6B80, 0XAB41, 0X6900, 0XA9C1, 0XA881, 0X6840, //
+            0X7800, 0XB8C1, 0XB981, 0X7940, 0XBB01, 0X7BC0, 0X7A80, 0XBA41, //
+            0XBE01, 0X7EC0, 0X7F80, 0XBF41, 0X7D00, 0XBDC1, 0XBC81, 0X7C40, //
+            0XB401, 0X74C0, 0X7580, 0XB541, 0X7700, 0XB7C1, 0XB681, 0X7640, //
+            0X7200, 0XB2C1, 0XB381, 0X7340, 0XB101, 0X71C0, 0X7080, 0XB041, //
+            0X5000, 0X90C1, 0X9181, 0X5140, 0X9301, 0X53C0, 0X5280, 0X9241, //
+            0X9601, 0X56C0, 0X5780, 0X9741, 0X5500, 0X95C1, 0X9481, 0X5440, //
+            0X9C01, 0X5CC0, 0X5D80, 0X9D41, 0X5F00, 0X9FC1, 0X9E81, 0X5E40, //
+            0X5A00, 0X9AC1, 0X9B81, 0X5B40, 0X9901, 0X59C0, 0X5880, 0X9841, //
+            0X8801, 0X48C0, 0X4980, 0X8941, 0X4B00, 0X8BC1, 0X8A81, 0X4A40, //
+            0X4E00, 0X8EC1, 0X8F81, 0X4F40, 0X8D01, 0X4DC0, 0X4C80, 0X8C41, //
+            0X4400, 0X84C1, 0X8581, 0X4540, 0X8701, 0X47C0, 0X4680, 0X8641, //
+            0X8201, 0X42C0, 0X4380, 0X8341, 0X4100, 0X81C1, 0X8081, 0X4040, //
+    };
+
+    uint8_t  nTemp;
+    uint16_t wCRCWord                 = 0xFFFF;
+
+    while (wLength--) {
+        nTemp = *nData++ ^ wCRCWord;
+        wCRCWord >>= 8u;
+        wCRCWord ^= wCRCTable[nTemp];
+    }
+
+    return wCRCWord;
+}

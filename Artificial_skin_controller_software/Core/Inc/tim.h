@@ -1,60 +1,45 @@
-/**
-  ******************************************************************************
-  * File Name          : TIM.h
-  * Description        : This file provides code for the configuration
-  *                      of the TIM instances.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __tim_H
 #define __tim_H
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
+#define PI 3.1416f
+
 
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 
-/* USER CODE BEGIN Private defines */
+extern uint32_t first_tactile_ptr;
+extern uint32_t first_temperature_ptr;
+extern uint32_t field_config_fulfilment;
+extern uint8_t field_config_flag;
 
-/* USER CODE END Private defines */
+extern uint8_t analog_data_ready_flag;
+
 
 void MX_TIM1_Init(void);
 void MX_TIM2_Init(void);
 
-/* USER CODE BEGIN Prototypes */
+void take_Measurements();
+float calculate_Force(uint16_t raw_analog);
+uint16_t calculate_average_analog(uint8_t cell);
 
-/* USER CODE END Prototypes */
+void reset_All_Keys();
+uint8_t calculate_Tactile_Output();
+uint8_t check_Config_Presence();
+
+float degree2radian(uint16_t degree);
+uint16_t radian2degree(float radian);
+
+uint8_t write8_add(uint8_t *buffer);
+void erase_FLASH(uint32_t start, uint8_t pages);
 
 #ifdef __cplusplus
 }
 #endif
 #endif /*__ tim_H */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
