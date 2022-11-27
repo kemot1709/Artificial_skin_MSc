@@ -1,0 +1,26 @@
+# CLion
+**/~$*
+**/.idea
+**html
+
+# CubeMX
+.cproject
+.mxproject
+.project
+*.ld
+*.xml
+
+# CLion for STM32
+CMakeLists*
+CMakeCache*
+CMakeFiles*
+*.cmake
+Makefile
+/cmake-build*/*
+
+# Compiled software hex and elf
+!/cmake-build*/*.hex
+!/cmake-build*/*.elf
+
+# Libraries
+/Drivers
