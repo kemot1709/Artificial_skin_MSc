@@ -22,7 +22,7 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1000, 500)
+        MainWindow.resize(1300, 500)
         self.app_screen = QtWidgets.QWidget(MainWindow)
         self.app_screen.setObjectName("app_screen")
         MainWindow.setCentralWidget(self.app_screen)
@@ -35,6 +35,79 @@ class Ui_MainWindow(object):
         self.graphics_view.scale(1, -1)
         self.graphics_view.setScene(self.graphics_scene)
         self.graphics_view.fitInView(self.graphics_scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
+        self.weight_1 = QtWidgets.QLabel(self.app_screen)
+        self.weight_1.move(1000, 50)
+        self.weight_1.setFont(QtGui.QFont('Times', 15))
+        self.weight_1.setText("M1:")
+        self.weight_1_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_1_value.move(1100, 50)
+        self.weight_1_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_2 = QtWidgets.QLabel(self.app_screen)
+        self.weight_2.move(1000, 100)
+        self.weight_2.setFont(QtGui.QFont('Times', 15))
+        self.weight_2.setText("M2:")
+        self.weight_2_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_2_value.move(1100, 100)
+        self.weight_2_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_3 = QtWidgets.QLabel(self.app_screen)
+        self.weight_3.move(1000, 150)
+        self.weight_3.setFont(QtGui.QFont('Times', 15))
+        self.weight_3.setText("M3:")
+        self.weight_3_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_3_value.move(1100, 150)
+        self.weight_3_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_4 = QtWidgets.QLabel(self.app_screen)
+        self.weight_4.move(1000, 200)
+        self.weight_4.setFont(QtGui.QFont('Times', 15))
+        self.weight_4.setText("M4:")
+        self.weight_4_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_4_value.move(1100, 200)
+        self.weight_4_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_5 = QtWidgets.QLabel(self.app_screen)
+        self.weight_5.move(1000, 250)
+        self.weight_5.setFont(QtGui.QFont('Times', 15))
+        self.weight_5.setText("M5A:")
+        self.weight_5_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_5_value.move(1100, 250)
+        self.weight_5_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_6 = QtWidgets.QLabel(self.app_screen)
+        self.weight_6.move(1000, 300)
+        self.weight_6.setFont(QtGui.QFont('Times', 15))
+        self.weight_6.setText("M5B:")
+        self.weight_6_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_6_value.move(1100, 300)
+        self.weight_6_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_7 = QtWidgets.QLabel(self.app_screen)
+        self.weight_7.move(1000, 350)
+        self.weight_7.setFont(QtGui.QFont('Times', 15))
+        self.weight_7.setText("M5C:")
+        self.weight_7_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_7_value.move(1100, 350)
+        self.weight_7_value.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_8 = QtWidgets.QLabel(self.app_screen)
+        self.weight_8.move(1000, 400)
+        self.weight_8.setFont(QtGui.QFont('Times', 15))
+        self.weight_8.setText("M6:")
+        self.weight_8_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_8_value.move(1100, 400)
+        self.weight_8_value.setFont(QtGui.QFont('Times', 15))
+
+        self.map_method_1 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_2 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_3 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_4 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_5 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_6 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_7 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_8 = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
         # self.statusbar = QtWidgets.QStatusBar(MainWindow)
         # self.statusbar.setObjectName("statusbar")
@@ -71,7 +144,12 @@ class Ui_MainWindow(object):
         fieldHeight = height / self.rows
 
         map_255 = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        map_help = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        map_with_cabration_diff = [[0 for x in range(self.columns)] for y in range(self.rows)]
+
+        map_max_value = max(self.map)
+        filterA = 4000
+        filterB = 3925
+        filterC = 3850
 
         for i in range(self.columns):
             x0 = i * fieldWidth
@@ -81,19 +159,34 @@ class Ui_MainWindow(object):
                 y0 = j * fieldHeight
                 y1 = y0 + fieldHeight
 
-                map_help[i][j] = self.map[i][j] + 4095 - self.map_calibrated[i][j]
-
-                # Calculating for perfect sensor, dont need validity check
-                # self.value = int(255 - self.map[i][j] * 255 / 4095)
+                self.map_method_1[i][j] = self.map[i][j]
+                self.map_method_2[i][j] = self.map[i][j] + 4095 - map_max_value
+                self.map_method_3[i][j] = self.map[i][j] + 4095 - self.map_calibrated[i][j]
+                self.map_method_4[i][j] = self.map[i][j] * (4095 / self.map_calibrated[i][j])
+                self.map_method_5[i][j] = self.map[i][j]
+                if self.map_method_5[i][j] > filterA:
+                    self.map_method_5[i][j] = filterA
+                self.map_method_6[i][j] = self.map[i][j]
+                if self.map_method_6[i][j] > filterB:
+                    self.map_method_6[i][j] = filterB
+                self.map_method_7[i][j] = self.map[i][j]
+                if self.map_method_7[i][j] > filterC:
+                    self.map_method_7[i][j] = filterC
+                self.map_method_8[i][j] = self.map[i][j]
+                if self.map_method_7[i][j] > 0.95 * self.map_calibrated[i][j]:
+                    self.map_method_7[i][j] = 0.95 * self.map_calibrated[i][j]
 
                 # Calculating by previously saved calibration at empty table of every field
-                self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
+                # self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
 
                 # Calculating by using filter at level, every value lower than filter is considered as valid
                 # filter = 3850
                 # if self.map[i][j] > filter:
                 #     self.map[i][j] = filter
                 # self.value = int(255 - self.map[i][j] * 255 / filter)
+
+                # Calculating for perfect sensor, dont need validity check
+                self.value = int(255 - self.map[i][j] * 255 / 4095)
 
                 if self.value > 255:
                     self.value = 255
