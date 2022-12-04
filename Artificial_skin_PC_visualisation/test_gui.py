@@ -12,6 +12,10 @@ import numpy as np
 from PIL import Image as im
 
 
+def weight_of_items(map_of_pressure, max_value):
+    pass
+
+
 class Ui_MainWindow(object):
     rows = 16
     columns = 16
@@ -22,7 +26,7 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1300, 500)
+        MainWindow.resize(1500, 500)
         self.app_screen = QtWidgets.QWidget(MainWindow)
         self.app_screen.setObjectName("app_screen")
         MainWindow.setCentralWidget(self.app_screen)
@@ -75,6 +79,9 @@ class Ui_MainWindow(object):
         self.weight_5_value = QtWidgets.QLabel(self.app_screen)
         self.weight_5_value.move(1100, 250)
         self.weight_5_value.setFont(QtGui.QFont('Times', 15))
+        self.weight_5_value_low = QtWidgets.QLabel(self.app_screen)
+        self.weight_5_value_low.move(1300, 250)
+        self.weight_5_value_low.setFont(QtGui.QFont('Times', 15))
 
         self.weight_6 = QtWidgets.QLabel(self.app_screen)
         self.weight_6.move(1000, 300)
@@ -83,6 +90,9 @@ class Ui_MainWindow(object):
         self.weight_6_value = QtWidgets.QLabel(self.app_screen)
         self.weight_6_value.move(1100, 300)
         self.weight_6_value.setFont(QtGui.QFont('Times', 15))
+        self.weight_6_value_low = QtWidgets.QLabel(self.app_screen)
+        self.weight_6_value_low.move(1300, 300)
+        self.weight_6_value_low.setFont(QtGui.QFont('Times', 15))
 
         self.weight_7 = QtWidgets.QLabel(self.app_screen)
         self.weight_7.move(1000, 350)
@@ -91,14 +101,31 @@ class Ui_MainWindow(object):
         self.weight_7_value = QtWidgets.QLabel(self.app_screen)
         self.weight_7_value.move(1100, 350)
         self.weight_7_value.setFont(QtGui.QFont('Times', 15))
+        self.weight_7_value_low = QtWidgets.QLabel(self.app_screen)
+        self.weight_7_value_low.move(1300, 350)
+        self.weight_7_value_low.setFont(QtGui.QFont('Times', 15))
 
         self.weight_8 = QtWidgets.QLabel(self.app_screen)
         self.weight_8.move(1000, 400)
         self.weight_8.setFont(QtGui.QFont('Times', 15))
-        self.weight_8.setText("M6:")
+        self.weight_8.setText("M6A:")
         self.weight_8_value = QtWidgets.QLabel(self.app_screen)
         self.weight_8_value.move(1100, 400)
         self.weight_8_value.setFont(QtGui.QFont('Times', 15))
+        self.weight_8_value_low = QtWidgets.QLabel(self.app_screen)
+        self.weight_8_value_low.move(1300, 400)
+        self.weight_8_value_low.setFont(QtGui.QFont('Times', 15))
+
+        self.weight_9 = QtWidgets.QLabel(self.app_screen)
+        self.weight_9.move(1000, 450)
+        self.weight_9.setFont(QtGui.QFont('Times', 15))
+        self.weight_9.setText("M6B:")
+        self.weight_9_value = QtWidgets.QLabel(self.app_screen)
+        self.weight_9_value.move(1100, 450)
+        self.weight_9_value.setFont(QtGui.QFont('Times', 15))
+        self.weight_9_value_low = QtWidgets.QLabel(self.app_screen)
+        self.weight_9_value_low.move(1300, 450)
+        self.weight_9_value_low.setFont(QtGui.QFont('Times', 15))
 
         self.map_method_1 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_2 = [[0 for x in range(self.columns)] for y in range(self.rows)]
@@ -108,6 +135,7 @@ class Ui_MainWindow(object):
         self.map_method_6 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_7 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_8 = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        self.map_method_9 = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
         # self.statusbar = QtWidgets.QStatusBar(MainWindow)
         # self.statusbar.setObjectName("statusbar")
@@ -163,6 +191,7 @@ class Ui_MainWindow(object):
                 self.map_method_2[i][j] = self.map[i][j] + 4095 - map_max_value
                 self.map_method_3[i][j] = self.map[i][j] + 4095 - self.map_calibrated[i][j]
                 self.map_method_4[i][j] = self.map[i][j] * (4095 / self.map_calibrated[i][j])
+
                 self.map_method_5[i][j] = self.map[i][j]
                 if self.map_method_5[i][j] > filterA:
                     self.map_method_5[i][j] = filterA
@@ -173,8 +202,11 @@ class Ui_MainWindow(object):
                 if self.map_method_7[i][j] > filterC:
                     self.map_method_7[i][j] = filterC
                 self.map_method_8[i][j] = self.map[i][j]
-                if self.map_method_7[i][j] > 0.95 * self.map_calibrated[i][j]:
-                    self.map_method_7[i][j] = 0.95 * self.map_calibrated[i][j]
+
+                if self.map_method_8[i][j] > 0.95 * self.map_calibrated[i][j]:
+                    self.map_method_8[i][j] = 0.95 * self.map_calibrated[i][j]
+                if self.map_method_9[i][j] > 0.9 * self.map_calibrated[i][j]:
+                    self.map_method_9[i][j] = 0.9 * self.map_calibrated[i][j]
 
                 # Calculating by previously saved calibration at empty table of every field
                 # self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
