@@ -12,9 +12,11 @@ import numpy as np
 from PIL import Image as im
 
 HYP_A = 39498.0
-HYP_X0 = 5.6
+# HYP_X0 = 5.6
+HYP_X0 = 0.0
 HYP_Y = 0.0
 RES = 470
+FILE_OUT_WEIGHT = "weight test"
 
 
 def weight_of_items(map_of_pressure, max_value):
@@ -30,6 +32,8 @@ def weight_of_items(map_of_pressure, max_value):
             except ZeroDivisionError:
                 pass
 
+    if weight < 0.0:
+        weight = 0.0
     return weight
 
 
@@ -40,10 +44,11 @@ class Ui_MainWindow(object):
     map = None
     map_calibrated = None
     last_timestamp = datetime.now()
+    values = [0 for x in range(10)]
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1500, 500)
+        MainWindow.resize(1300, 500)
         self.app_screen = QtWidgets.QWidget(MainWindow)
         self.app_screen.setObjectName("app_screen")
         MainWindow.setCentralWidget(self.app_screen)
@@ -106,11 +111,6 @@ class Ui_MainWindow(object):
         self.weight_5_value.setFont(QtGui.QFont('Times', 15))
         self.weight_5_value.resize(QtCore.QSize(170, 50))
         self.weight_5_value.setText("      ")
-        self.weight_5_value_low = QtWidgets.QLabel(self.app_screen)
-        self.weight_5_value_low.move(1300, 250)
-        self.weight_5_value_low.setFont(QtGui.QFont('Times', 15))
-        self.weight_5_value_low.resize(QtCore.QSize(170, 50))
-        self.weight_5_value_low.setText("      ")
 
         self.weight_6 = QtWidgets.QLabel(self.app_screen)
         self.weight_6.move(1000, 300)
@@ -121,11 +121,6 @@ class Ui_MainWindow(object):
         self.weight_6_value.setFont(QtGui.QFont('Times', 15))
         self.weight_6_value.resize(QtCore.QSize(170, 50))
         self.weight_6_value.setText("      ")
-        self.weight_6_value_low = QtWidgets.QLabel(self.app_screen)
-        self.weight_6_value_low.move(1300, 300)
-        self.weight_6_value_low.setFont(QtGui.QFont('Times', 15))
-        self.weight_6_value_low.resize(QtCore.QSize(170, 50))
-        self.weight_6_value_low.setText("      ")
 
         self.weight_7 = QtWidgets.QLabel(self.app_screen)
         self.weight_7.move(1000, 350)
@@ -136,11 +131,6 @@ class Ui_MainWindow(object):
         self.weight_7_value.setFont(QtGui.QFont('Times', 15))
         self.weight_7_value.resize(QtCore.QSize(170, 50))
         self.weight_7_value.setText("      ")
-        self.weight_7_value_low = QtWidgets.QLabel(self.app_screen)
-        self.weight_7_value_low.move(1300, 350)
-        self.weight_7_value_low.setFont(QtGui.QFont('Times', 15))
-        self.weight_7_value_low.resize(QtCore.QSize(170, 50))
-        self.weight_7_value_low.setText("      ")
 
         self.weight_8 = QtWidgets.QLabel(self.app_screen)
         self.weight_8.move(1000, 400)
@@ -151,11 +141,6 @@ class Ui_MainWindow(object):
         self.weight_8_value.setFont(QtGui.QFont('Times', 15))
         self.weight_8_value.resize(QtCore.QSize(170, 50))
         self.weight_8_value.setText("      ")
-        self.weight_8_value_low = QtWidgets.QLabel(self.app_screen)
-        self.weight_8_value_low.move(1300, 400)
-        self.weight_8_value_low.setFont(QtGui.QFont('Times', 15))
-        self.weight_8_value_low.resize(QtCore.QSize(170, 50))
-        self.weight_8_value_low.setText("      ")
 
         self.weight_9 = QtWidgets.QLabel(self.app_screen)
         self.weight_9.move(1000, 450)
@@ -166,11 +151,12 @@ class Ui_MainWindow(object):
         self.weight_9_value.setFont(QtGui.QFont('Times', 15))
         self.weight_9_value.resize(QtCore.QSize(170, 50))
         self.weight_9_value.setText("      ")
-        self.weight_9_value_low = QtWidgets.QLabel(self.app_screen)
-        self.weight_9_value_low.move(1300, 450)
-        self.weight_9_value_low.setFont(QtGui.QFont('Times', 15))
-        self.weight_9_value_low.resize(QtCore.QSize(170, 50))
-        self.weight_9_value_low.setText("      ")
+
+        self.button_save = QtWidgets.QPushButton(self.app_screen)
+        self.button_save.move(1100, 10)
+        self.button_save.resize(200, 30)
+        self.button_save.setText("Save data to file")
+        self.button_save.clicked.connect(self.save_to_file)
 
         self.map_method_1 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_2 = [[0 for x in range(self.columns)] for y in range(self.rows)]
@@ -180,9 +166,7 @@ class Ui_MainWindow(object):
         self.map_method_6 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_7 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_8 = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        self.map_method_8B = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_9 = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        self.map_method_9B = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
         # self.statusbar = QtWidgets.QStatusBar(MainWindow)
         # self.statusbar.setObjectName("statusbar")
@@ -252,12 +236,12 @@ class Ui_MainWindow(object):
                 self.map_method_8[i][j] = self.map[i][j]
                 if self.map_method_8[i][j] > 0.95 * self.map_calibrated[i][j]:
                     self.map_method_8[i][j] = 0.95 * self.map_calibrated[i][j]
-                self.map_method_8B[i][j] = self.map_method_8[i][j] * 4095 / (0.95 * self.map_calibrated[i][j])
+                self.map_method_8[i][j] = self.map_method_8[i][j] * 4095 / (0.95 * self.map_calibrated[i][j])
 
                 self.map_method_9[i][j] = self.map[i][j]
                 if self.map_method_9[i][j] > 0.9 * self.map_calibrated[i][j]:
                     self.map_method_9[i][j] = 0.9 * self.map_calibrated[i][j]
-                self.map_method_9B[i][j] = self.map_method_9[i][j] * 4095 / (0.9 * self.map_calibrated[i][j])
+                self.map_method_9[i][j] = self.map_method_9[i][j] * 4095 / (0.9 * self.map_calibrated[i][j])
 
                 # Calculating by previously saved calibration at empty table of every field
                 # self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
@@ -270,6 +254,7 @@ class Ui_MainWindow(object):
 
                 # Calculating for perfect sensor, dont need validity check
                 self.value = int(255 - self.map[i][j] * 255 / 4095)
+                self.value *= 10
 
                 if self.value > 255:
                     self.value = 255
@@ -281,20 +266,25 @@ class Ui_MainWindow(object):
                 pen = QtGui.QPen(QtGui.QColor(self.value, self.value, self.value), 1.0)
                 self.graphics_scene.addRect(x0, y0, x1, y1, pen, brush)
 
-        self.weight_1_value.setText(str(weight_of_items(self.map_method_1, 4095)))
-        self.weight_2_value.setText(str(weight_of_items(self.map_method_2, 4095)))
-        self.weight_3_value.setText(str(weight_of_items(self.map_method_3, 4095)))
-        self.weight_4_value.setText(str(weight_of_items(self.map_method_4, 4095)))
-        self.weight_5_value.setText(str(weight_of_items(self.map_method_5, 4095)))
-        self.weight_5_value_low.setText(str(weight_of_items(self.map_method_5, filterA)))
-        self.weight_6_value.setText(str(weight_of_items(self.map_method_6, 4095)))
-        self.weight_6_value_low.setText(str(weight_of_items(self.map_method_6, filterB)))
-        self.weight_7_value.setText(str(weight_of_items(self.map_method_7, 4095)))
-        self.weight_7_value_low.setText(str(weight_of_items(self.map_method_7, filterC)))
-        self.weight_8_value.setText(str(weight_of_items(self.map_method_8, 4095)))
-        self.weight_8_value_low.setText(str(weight_of_items(self.map_method_8B, 4095)))
-        self.weight_9_value.setText(str(weight_of_items(self.map_method_9, 4095)))
-        self.weight_9_value_low.setText(str(weight_of_items(self.map_method_9B, 4095)))
+        self.values[0] = str(weight_of_items(self.map_method_1, 4095))
+        self.values[1] = str(weight_of_items(self.map_method_2, 4095))
+        self.values[2] = str(weight_of_items(self.map_method_3, 4095))
+        self.values[3] = str(weight_of_items(self.map_method_4, 4095))
+        self.values[4] = str(weight_of_items(self.map_method_5, filterA))
+        self.values[5] = str(weight_of_items(self.map_method_6, filterB))
+        self.values[6] = str(weight_of_items(self.map_method_7, filterC))
+        self.values[7] = str(weight_of_items(self.map_method_8, 4095))
+        self.values[8] = str(weight_of_items(self.map_method_9, 4095))
+
+        self.weight_1_value.setText(self.values[0])
+        self.weight_2_value.setText(self.values[1])
+        self.weight_3_value.setText(self.values[2])
+        self.weight_4_value.setText(self.values[3])
+        self.weight_5_value.setText(self.values[4])
+        self.weight_6_value.setText(self.values[5])
+        self.weight_7_value.setText(self.values[6])
+        self.weight_8_value.setText(self.values[7])
+        self.weight_9_value.setText(self.values[8])
 
         t = datetime.now()
         if (t - self.last_timestamp).seconds > 5.0:
@@ -304,6 +294,13 @@ class Ui_MainWindow(object):
             stamp = t.strftime('%H_%M_%S')
             # image.save(r'img\image_' + stamp + '.png')
             # print('image saved')
+
+    def save_to_file(self):
+        with open(FILE_OUT_WEIGHT, "a") as file:
+            file.write(
+                "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (self.values[0], self.values[1], self.values[2], self.values[3],
+                                                          self.values[4], self.values[5], self.values[6], self.values[7],
+                                                          self.values[8]))
 
 
 ui = Ui_MainWindow()
