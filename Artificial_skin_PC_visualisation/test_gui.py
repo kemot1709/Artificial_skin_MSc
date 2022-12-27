@@ -11,12 +11,11 @@ import serial.tools.list_ports as list_ports
 import numpy as np
 from PIL import Image as im
 
-HYP_A = 39498.0
-# HYP_X0 = 5.6
+HYP_A = 35108.0
 HYP_X0 = 0.0
-HYP_Y = 0.0
+HYP_Y = 0.42
 RES = 470
-FILE_OUT_WEIGHT = "weight test"
+FILE_OUT_WEIGHT = "weight_test"
 
 
 def weight_of_items(map_of_pressure, max_value):
@@ -27,10 +26,12 @@ def weight_of_items(map_of_pressure, max_value):
             # Have to be rounded because otherwise have calculation errors with small weight
             normalized_pressure = round(tile * (4095 / max_value), 1)
             try:
+                if normalized_pressure >= 4095.0:
+                    continue
                 resistance = (RES * normalized_pressure) / (4095 - normalized_pressure)
                 weight += (HYP_X0 + (HYP_A / (resistance - HYP_Y)))
             except ZeroDivisionError:
-                pass
+                continue
 
     if weight < 0.0:
         weight = 0.0
@@ -156,7 +157,13 @@ class Ui_MainWindow(object):
         self.button_save.move(1100, 10)
         self.button_save.resize(200, 30)
         self.button_save.setText("Save data to file")
-        self.button_save.clicked.connect(self.save_to_file)
+        self.button_save.clicked.connect(self.buttonSaveToFileHandler)
+
+        self.button_calibrate = QtWidgets.QPushButton(self.app_screen)
+        self.button_calibrate.move(1010, 10)
+        self.button_calibrate.resize(90, 30)
+        self.button_calibrate.setText("Calibrate sensors")
+        self.button_calibrate.clicked.connect(self.buttonCalibrateHandler)
 
         self.map_method_1 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_2 = [[0 for x in range(self.columns)] for y in range(self.rows)]
@@ -207,8 +214,10 @@ class Ui_MainWindow(object):
 
         map_max_value = max(max(self.map))
         filterA = 4000
-        filterB = 3925
-        filterC = 3850
+        filterB = 3950
+        filterC = 3900
+        multA = 0.99
+        multB = 0.98
 
         for i in range(self.columns):
             x0 = i * fieldWidth
@@ -234,14 +243,14 @@ class Ui_MainWindow(object):
                     self.map_method_7[i][j] = filterC
 
                 self.map_method_8[i][j] = self.map[i][j]
-                if self.map_method_8[i][j] > 0.95 * self.map_calibrated[i][j]:
-                    self.map_method_8[i][j] = 0.95 * self.map_calibrated[i][j]
-                self.map_method_8[i][j] = self.map_method_8[i][j] * 4095 / (0.95 * self.map_calibrated[i][j])
+                if self.map_method_8[i][j] > multA * self.map_calibrated[i][j]:
+                    self.map_method_8[i][j] = multA * self.map_calibrated[i][j]
+                self.map_method_8[i][j] = self.map_method_8[i][j] * 4095 / (multA * self.map_calibrated[i][j])
 
                 self.map_method_9[i][j] = self.map[i][j]
-                if self.map_method_9[i][j] > 0.9 * self.map_calibrated[i][j]:
-                    self.map_method_9[i][j] = 0.9 * self.map_calibrated[i][j]
-                self.map_method_9[i][j] = self.map_method_9[i][j] * 4095 / (0.9 * self.map_calibrated[i][j])
+                if self.map_method_9[i][j] > multB * self.map_calibrated[i][j]:
+                    self.map_method_9[i][j] = multB * self.map_calibrated[i][j]
+                self.map_method_9[i][j] = self.map_method_9[i][j] * 4095 / (multB * self.map_calibrated[i][j])
 
                 # Calculating by previously saved calibration at empty table of every field
                 # self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
@@ -295,12 +304,16 @@ class Ui_MainWindow(object):
             # image.save(r'img\image_' + stamp + '.png')
             # print('image saved')
 
-    def save_to_file(self):
+    def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:
             file.write(
-                "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (self.values[0], self.values[1], self.values[2], self.values[3],
-                                                          self.values[4], self.values[5], self.values[6], self.values[7],
-                                                          self.values[8]))
+                    "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
+                            self.values[0], self.values[1], self.values[2], self.values[3],
+                            self.values[4], self.values[5], self.values[6], self.values[7],
+                            self.values[8]))
+
+    def buttonCalibrateHandler(self):
+        self.recalibrateMap(self.map)
 
 
 ui = Ui_MainWindow()
