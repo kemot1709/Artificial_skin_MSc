@@ -263,7 +263,9 @@ class Ui_MainWindow(object):
 
                 # Calculating for perfect sensor, dont need validity check
                 self.value = int(255 - self.map[i][j] * 255 / 4095)
-                self.value *= 10
+
+                # Improve visibility on image
+                # self.value *= 10
 
                 if self.value > 255:
                     self.value = 255
@@ -299,10 +301,12 @@ class Ui_MainWindow(object):
         if (t - self.last_timestamp).seconds > 5.0:
             self.last_timestamp = t
 
-            image = im.fromarray(np.array(map_255, dtype=np.uint8))
+            image = im.fromarray(np.array(map_255, dtype=np.uint8), mode='L')
             stamp = t.strftime('%H_%M_%S')
-            # image.save(r'img\image_' + stamp + '.png')
-            # print('image saved')
+            name = 'img/image_' + stamp + '.png'
+            # TODO create dir if do not exist
+            image.save(name)
+            print('image saved')
 
     def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:
