@@ -44,6 +44,7 @@ class Ui_MainWindow(object):
     value = 100
     map = None
     map_calibrated = None
+    map_255_self = None
     last_timestamp = datetime.now()
     values = [0 for x in range(10)]
 
@@ -155,9 +156,15 @@ class Ui_MainWindow(object):
 
         self.button_save = QtWidgets.QPushButton(self.app_screen)
         self.button_save.move(1100, 10)
-        self.button_save.resize(200, 30)
-        self.button_save.setText("Save data to file")
+        self.button_save.resize(100, 30)
+        self.button_save.setText("txt")
         self.button_save.clicked.connect(self.buttonSaveToFileHandler)
+
+        self.button_save_img = QtWidgets.QPushButton(self.app_screen)
+        self.button_save_img.move(1200, 10)
+        self.button_save_img.resize(100, 30)
+        self.button_save_img.setText("img")
+        self.button_save_img.clicked.connect(self.buttonImgSaveToFileHandler)
 
         self.button_calibrate = QtWidgets.QPushButton(self.app_screen)
         self.button_calibrate.move(1010, 10)
@@ -297,16 +304,16 @@ class Ui_MainWindow(object):
         self.weight_8_value.setText(self.values[7])
         self.weight_9_value.setText(self.values[8])
 
-        t = datetime.now()
-        if (t - self.last_timestamp).seconds > 5.0:
-            self.last_timestamp = t
+        self.map_255_self = map_255
 
-            image = im.fromarray(np.array(map_255, dtype=np.uint8), mode='L')
-            stamp = t.strftime('%H_%M_%S')
-            name = 'img/image_' + stamp + '.png'
-            # TODO create dir if do not exist
-            image.save(name)
-            print('image saved')
+    def buttonImgSaveToFileHandler(self):
+        t = datetime.now()
+        image = im.fromarray(np.array(self.map_255_self, dtype=np.uint8), mode='L')
+        stamp = t.strftime('%H_%M_%S')
+        name = 'img/image_' + stamp + '.png'
+        # TODO create dir if do not exist
+        image.save(name)
+        print('image saved')
 
     def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:
