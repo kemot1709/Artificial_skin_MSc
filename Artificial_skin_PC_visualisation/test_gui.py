@@ -53,6 +53,7 @@ class Ui_MainWindow(object):
     map_255_self = None
     last_timestamp = datetime.now()
     values = [0 for x in range(10)]
+    image_cnt = IMAGE_COUNTER
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -317,11 +318,11 @@ class Ui_MainWindow(object):
         stamp = ''
         if IMAGE_ADD_TIMESTAMP:
             t = datetime.now()
-            stamp = t.strftime('%H_%M_%S')
+            stamp = '_' + t.strftime('%H_%M_%S')
 
         image = im.fromarray(np.array(self.map_255_self, dtype=np.uint8), mode='L')
         # name = 'img/image_' + stamp + '.png'
-        name = IMAGE_FILENAME + '_' + '_' + str(IMAGE_COUNTER) + stamp + '.png'
+        name = IMAGE_FILENAME + '_' + str(self.image_cnt) + stamp + '.png'
         image.save(IMAGE_FOLDER + '/' + name)
 
         if IMAGE_ADD_CALIBRATION_MAP:
@@ -329,6 +330,7 @@ class Ui_MainWindow(object):
             c_image = im.fromarray(np.array(self.map_calibrated, dtype=np.uint8), mode='L')
             c_image.save(IMAGE_FOLDER + '/' + c_name)
 
+        self.image_cnt = self.image_cnt + 1
         print('image saved')
 
     def buttonSaveToFileHandler(self):
