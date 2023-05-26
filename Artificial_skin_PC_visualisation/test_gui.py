@@ -321,7 +321,7 @@ class Ui_MainWindow(object):
 
         image = im.fromarray(np.array(self.map_255_self, dtype=np.uint8), mode='L')
         # name = 'img/image_' + stamp + '.png'
-        name = IMAGE_FILENAME + '_' + stamp + '_' + str(IMAGE_COUNTER) + '.png'
+        name = IMAGE_FILENAME + '_' + '_' + str(IMAGE_COUNTER) + stamp + '.png'
         image.save(IMAGE_FOLDER + '/' + name)
 
         if IMAGE_ADD_CALIBRATION_MAP:
