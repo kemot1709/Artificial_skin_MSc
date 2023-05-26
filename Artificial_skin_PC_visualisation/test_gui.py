@@ -17,6 +17,12 @@ HYP_Y = 0.42
 RES = 470
 FILE_OUT_WEIGHT = "weight_test"
 
+IMAGE_COUNTER = 1
+IMAGE_FOLDER = "c_img"
+IMAGE_FILENAME = "dupa"
+IMAGE_ADD_TIMESTAMP = False
+IMAGE_ADD_CALIBRATION_MAP = True
+
 
 def weight_of_items(map_of_pressure, max_value):
     weight = 0
@@ -307,12 +313,22 @@ class Ui_MainWindow(object):
         self.map_255_self = map_255
 
     def buttonImgSaveToFileHandler(self):
-        t = datetime.now()
-        image = im.fromarray(np.array(self.map_255_self, dtype=np.uint8), mode='L')
-        stamp = t.strftime('%H_%M_%S')
-        name = 'img/image_' + stamp + '.png'
         # TODO create dir if do not exist
-        image.save(name)
+        stamp = ''
+        if IMAGE_ADD_TIMESTAMP:
+            t = datetime.now()
+            stamp = t.strftime('%H_%M_%S')
+
+        image = im.fromarray(np.array(self.map_255_self, dtype=np.uint8), mode='L')
+        # name = 'img/image_' + stamp + '.png'
+        name = IMAGE_FILENAME + '_' + stamp + '_' + str(IMAGE_COUNTER) + '.png'
+        image.save(IMAGE_FOLDER + '/' + name)
+
+        if IMAGE_ADD_CALIBRATION_MAP:
+            c_name = 'c_' + name
+            c_image = im.fromarray(np.array(self.map_calibrated, dtype=np.uint8), mode='L')
+            c_image.save(IMAGE_FOLDER + '/' + c_name)
+
         print('image saved')
 
     def buttonSaveToFileHandler(self):
