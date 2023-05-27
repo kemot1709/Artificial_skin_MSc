@@ -57,7 +57,7 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1000, 500)
+        MainWindow.resize(1300, 500)
         self.app_screen = QtWidgets.QWidget(MainWindow)
         self.app_screen.setObjectName("app_screen")
         MainWindow.setCentralWidget(self.app_screen)
@@ -224,7 +224,14 @@ class Ui_MainWindow(object):
         fieldHeight = height / self.rows
 
         map_255 = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        map_help = [[0 for x in range(self.columns)] for y in range(self.rows)]
+        map_with_cabration_diff = [[0 for x in range(self.columns)] for y in range(self.rows)]
+
+        map_max_value = max(max(self.map))
+        filterA = 4000
+        filterB = 3950
+        filterC = 3900
+        multA = 0.99
+        multB = 0.98
 
         for i in range(self.columns):
             x0 = i * fieldWidth
@@ -234,13 +241,33 @@ class Ui_MainWindow(object):
                 y0 = j * fieldHeight
                 y1 = y0 + fieldHeight
 
-                map_help[i][j] = self.map[i][j] + 4095 - self.map_calibrated[i][j]
+                self.map_method_1[i][j] = self.map[i][j]
+                self.map_method_2[i][j] = self.map[i][j] + 4095 - map_max_value
+                self.map_method_3[i][j] = self.map[i][j] + 4095 - self.map_calibrated[i][j]
+                self.map_method_4[i][j] = self.map[i][j] * (4095 / self.map_calibrated[i][j])
 
-                # Calculating for perfect sensor, dont need validity check
-                # self.value = int(255 - self.map[i][j] * 255 / 4095)
+                self.map_method_5[i][j] = self.map[i][j]
+                if self.map_method_5[i][j] > filterA:
+                    self.map_method_5[i][j] = filterA
+                self.map_method_6[i][j] = self.map[i][j]
+                if self.map_method_6[i][j] > filterB:
+                    self.map_method_6[i][j] = filterB
+                self.map_method_7[i][j] = self.map[i][j]
+                if self.map_method_7[i][j] > filterC:
+                    self.map_method_7[i][j] = filterC
+
+                self.map_method_8[i][j] = self.map[i][j]
+                if self.map_method_8[i][j] > multA * self.map_calibrated[i][j]:
+                    self.map_method_8[i][j] = multA * self.map_calibrated[i][j]
+                self.map_method_8[i][j] = self.map_method_8[i][j] * 4095 / (multA * self.map_calibrated[i][j])
+
+                self.map_method_9[i][j] = self.map[i][j]
+                if self.map_method_9[i][j] > multB * self.map_calibrated[i][j]:
+                    self.map_method_9[i][j] = multB * self.map_calibrated[i][j]
+                self.map_method_9[i][j] = self.map_method_9[i][j] * 4095 / (multB * self.map_calibrated[i][j])
 
                 # Calculating by previously saved calibration at empty table of every field
-                self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
+                # self.value = int(255 - self.map[i][j] * 255 / self.map_calibrated[i][j])
 
                 # Calculating by using filter at level, every value lower than filter is considered as valid
                 # filter = 3850
@@ -305,6 +332,17 @@ class Ui_MainWindow(object):
 
         self.image_cnt = self.image_cnt + 1
         print('image saved')
+
+    def buttonSaveToFileHandler(self):
+        with open(FILE_OUT_WEIGHT, "a") as file:
+            file.write(
+                    "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
+                            self.values[0], self.values[1], self.values[2], self.values[3],
+                            self.values[4], self.values[5], self.values[6], self.values[7],
+                            self.values[8]))
+
+    def buttonCalibrateHandler(self):
+        self.recalibrateMap(self.map)
 
 
 ui = Ui_MainWindow()
