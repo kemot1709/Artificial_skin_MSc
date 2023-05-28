@@ -38,7 +38,7 @@ class FoodTrayType(Enum):
 class ItemShape(Enum):
     none = 0
     round = 1
-    square = 2
+    rectangle = 2
 
 
 class ItemShapeDetails(Enum):
@@ -94,15 +94,17 @@ class Item:
         self.dim2 = 0
         self.image = None
         self.image_calibration = None
+        self.image_mask = None
+        self.mask_set = False
 
-    def getItemsFromFilename(self, path: str, filename: str, image_id: int):
+    def getLabelsFromFilename(self, path: str, filename: str, image_id: int):
         self.id = image_id
         self.filename = filename
         self.image = im.open(path + "/" + filename)
         if os.path.isfile(path + "/c_" + filename):
             self.image_calibration = im.open(path + "/c_" + filename)
 
-        words = re.split('_.', filename)
+        words = re.split(r'_|\.', filename)
         if words[0] in itemDictionary:
             self.type = itemDictionary[words[0]]
 
@@ -110,19 +112,24 @@ class Item:
             self.weight = words[1]
 
         if self.type == ItemType.food_tray:
-            if words[3] in foodTrayDictionary:
-                self.details = foodTrayDictionary[words[3]]
+            if words[2] in foodTrayDictionary:
+                self.details = foodTrayDictionary[words[2]]
         elif self.type == ItemType.hand_any:
-            if words[3] in handTypeDictionary:
-                self.type = handTypeDictionary[words[3]]
-        elif words[3].startswith("r"):
-            if words[3][1:].isnumeric():
+            if words[2] in handTypeDictionary:
+                self.type = handTypeDictionary[words[2]]
+        elif words[2].startswith("r"):
+            if words[2][1:].isnumeric():
                 self.shape = ItemShape.round
-                self.dim1 = words[3][1:]
-                if words[4] and words[4] in itemShapeDetailsDictionary:
-                    self.shape_details = itemShapeDetailsDictionary[words[4]]
-        elif "x" in words[3]:
-            subwords = words[3].split("x")
+                self.dim1 = words[2][1:]
+                if words[3] and words[3] in itemShapeDetailsDictionary:
+                    self.shape_details = itemShapeDetailsDictionary[words[3]]
+        elif "x" in words[2]:
+            subwords = words[2].split("x")
             if subwords[0].isnumeric() and subwords[1].isnumeric():
                 self.dim1 = subwords[0]
                 self.dim2 = subwords[1]
+                self.shape = ItemShape.rectangle
+
+    def setMask(self, mask):
+        self.image_mask = mask
+        self.mask_set = True
