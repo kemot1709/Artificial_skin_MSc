@@ -13,3 +13,6 @@ __pycache__/
 
 # Temporary and test files
 temp.py
+
+# Compiled classifier
+*.h5
