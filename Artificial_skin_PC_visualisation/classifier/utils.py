@@ -71,5 +71,33 @@ class ImageParser:
         labelList = np.array(labelList)
         return labelList
 
-    def parseOrnToNames(self, list):
+    def parseOrdinalNumbersToNames(self, list):
         return self.map.mapOrdinalNumbersToLabelNames(list)
+
+
+def splitDataToTraining(data, training_size, valuation_size, test_size=0.0):
+    # Normalize inputs
+    # all_weight = training_size + valuation_size + test_size
+    # training_size /= all_weight
+    # valuation_size /= all_weight
+    # test_size /= all_weight
+
+    train_data = []
+    val_data = []
+    test_data = []
+    # This part is bad but I dont care
+    modulo_idx = 0
+    for item in data:
+        modulo_idx = modulo_idx % int(training_size + valuation_size + test_size)
+        if modulo_idx < training_size:
+            train_data.append(item)
+        elif modulo_idx < training_size + valuation_size:
+            val_data.append(item)
+        else:
+            test_data.append(item)
+        modulo_idx += 1
+    # End of bad part
+
+    if test_size > 0.0:
+        return [train_data, val_data, test_data]
+    return [train_data, val_data]
