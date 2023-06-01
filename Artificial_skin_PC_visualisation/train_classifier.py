@@ -1,10 +1,13 @@
-from item.utils import loadItems
+from item.utils import loadItems, selectDesiredItems
+from item.item import ItemType
 from classifier.utils import ImageParser, LabelsMap, splitDataToTraining
 from classifier.image_recognition import Classifier
 
 path = "c_img"
 
 itemList = loadItems(path)
+# itemList = selectDesiredItems(itemList, [ItemType.book, ItemType.mug_full, ItemType.mug_empty, ItemType.plate_full,
+#                                          ItemType.plate_empty, ItemType.phone])
 [trainingSet, validationSet, testSet] = splitDataToTraining(itemList, 4, 2, 2)
 
 # Parsing images and labels so keras can use them
