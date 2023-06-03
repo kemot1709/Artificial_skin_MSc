@@ -25,11 +25,10 @@ hold off;
 
 
 function figure_options(method)
-    grid
-    legend('Location', 'Best');
-    legend('Obiekt o œrednicy 28mm', 'Obiekt o œrednicy 50mm', 'Obiekt o œrednicy 150mm')
-    xlabel('Waga odczytana przez sztuczn¹ skórê');
-    ylabel('Rzeczywista waga przedmiotu');
-    title(strcat('Comaparison for method: ',method));
+grid
+legend('Location', 'Best');
+legend('Obiekt o œrednicy 28mm', 'Obiekt o œrednicy 50mm', 'Obiekt o œrednicy 150mm')
+xlabel('Waga odczytana przez sztuczn¹ skórê');
+ylabel('Rzeczywista waga przedmiotu');
+title(strcat('Comaparison for method: ', method));
 end
-
