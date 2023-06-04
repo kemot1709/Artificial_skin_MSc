@@ -16,6 +16,7 @@ HYP_X0 = 0.0
 HYP_Y = 0.42
 RES = 470
 FILE_OUT_WEIGHT = "weight_test"
+WEIGHT_MULTIPLIER = 2.5740
 
 IMAGE_COUNTER = 1
 IMAGE_FOLDER = "c_img"
@@ -54,6 +55,7 @@ class Ui_MainWindow(object):
     last_timestamp = datetime.now()
     values = [0 for x in range(10)]
     image_cnt = IMAGE_COUNTER
+    estimated_weight = 0
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -312,6 +314,7 @@ class Ui_MainWindow(object):
         self.weight_9_value.setText(self.values[8])
 
         self.map_255_self = map_255
+        self.estimated_weight = float(self.values[7]) * WEIGHT_MULTIPLIER
 
     def buttonImgSaveToFileHandler(self):
         # TODO create dir if do not exist
