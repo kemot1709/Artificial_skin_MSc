@@ -5,8 +5,7 @@ from datetime import datetime, timedelta
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import serial
-import serial.tools.list_ports as list_ports
+from connection.connection import Serial
 
 import numpy as np
 from PIL import Image as im
@@ -19,7 +18,7 @@ FILE_OUT_WEIGHT = "weight_test"
 WEIGHT_MULTIPLIER = 2.5740
 
 IMAGE_COUNTER = 1
-IMAGE_FOLDER = "c_img"
+IMAGE_FOLDER = "c_img_v2"
 IMAGE_FILENAME = "dupa"
 IMAGE_ADD_TIMESTAMP = False
 IMAGE_ADD_CALIBRATION_MAP = True
@@ -364,90 +363,6 @@ class Ui_MainWindow(object):
 
 ui = Ui_MainWindow()
 
-
-class Serial(QtCore.QThread):
-    rows = 16
-    columns = 16
-    pressure_map = None
-    ser = None
-
-    pressureMapUpdated = QtCore.pyqtSignal(int, int, list)
-
-    def __init__(self):
-        super().__init__()
-        self.pressure_map = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        self.connect_to_board()
-
-        self.exitFlag = False
-
-    def connect_to_board(self):
-        list_of_ports = list_ports.comports()
-        for port in list_of_ports:
-            print(port)
-
-        try:
-            if platform == "linux" or platform == "linux2":
-                # os.chmod('/dev/ttyUSB0', 0o666)
-                self.ser = serial.Serial('/dev/ttyUSB0')
-            elif platform == "darwin":
-                print("Change your computer")
-                return 0
-            elif platform == "win32":
-                self.ser = serial.Serial('COM3')
-            else:
-                print("Unknown operating system")
-                return 0
-
-            self.ser.baudrate = 115200
-            self.ser.timeout = 0.050
-            self.ser.parity = serial.PARITY_NONE
-            self.ser.stopbits = serial.STOPBITS_ONE
-            self.ser.bytesize = serial.EIGHTBITS
-
-            print("connected to: " + self.ser.portstr)
-            self.pressureMapUpdated.connect(ui.updateMap)
-            super().start()
-
-        # Wywaliło komunikację
-        except serial.serialutil.SerialException:
-            return 0
-
-    def run(self):
-        self.ser.flush()
-        try:
-            while not self.exitFlag:
-                # Read values from serial and make sure it's not garbage
-                try:
-                    input_msg = self.ser.readline().decode('utf-8')
-                except:
-                    input_msg = str()
-
-                if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
-                    lines = input_msg.strip().split('|')
-
-                    i = 0
-                    for line in lines:
-                        if i >= self.rows:
-                            continue
-                        list_of_values = line.strip().split(',')
-
-                        j = 0
-                        for value in list_of_values:
-                            if j >= self.columns:
-                                break
-
-                            try:
-                                self.pressure_map[j][i] = float(value)
-                            except:
-                                print("Kurwaaaaaaaaaaaaa", i, j, int(value))
-                                pass
-                            j = j + 1
-                        i = i + 1
-                    self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
-        except Exception as e:
-            print(e)
-
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
@@ -456,6 +371,7 @@ if __name__ == "__main__":
         print("Board not detected or busy")
         sys.exit()
     else:
+        ser.set_ui(ui)
         MainWindow = QtWidgets.QMainWindow()
         ui.setupUi(MainWindow)
 

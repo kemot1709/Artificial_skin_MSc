@@ -13,7 +13,7 @@ class Params:
 class ImageMask:
     mask = np.zeros([16, 16])
     roi_points = np.array([[0, 7], [4, 0], [11, 0], [15, 7], [15, 15], [0, 15]])
-    cv2.fillPoly(mask, [roi_points], 1)
+    cv2.fillPoly(mask, [roi_points], int(1))
 
     def getMask(self):
         return self.mask

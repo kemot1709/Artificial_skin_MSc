@@ -120,9 +120,9 @@ class Item:
 
         self.id = image_id
         self.filename = filename
-        self.image = im.open(path + "/" + filename)
+        self.image = np.array(im.open(path + "/" + filename), dtype=int)
         if os.path.isfile(path + "/c_" + filename):
-            self.image_calibration = im.open(path + "/c_" + filename)
+            self.image_calibration = np.array(im.open(path + "/c_" + filename), dtype=int)
         self.setExtractedImage()
 
         words = re.split(r'_|\.', filename)
@@ -201,9 +201,11 @@ class Item:
         self.setExtractedImage()
 
     def setExtractedImage(self):
-        source = np.array(self.image, dtype=int)
-        calibration = np.array(self.image_calibration, dtype=int)
-        extracted = source - calibration
+        if self.image_calibration in None:
+            self.image_extracted = self.image
+            return
+
+        extracted = self.image - self.image_calibration
         if self.image_mask is not None:
             mask = np.array(self.image_mask, dtype=int)
         else:
@@ -213,6 +215,7 @@ class Item:
             for j in range(16):
                 if extracted[i][j] < 0 or mask[i][j] == 0:
                     extracted[i][j] = 0
+        self.image_extracted = np.array(extracted)
 
     def getExtractedImage(self):
         return self.image_extracted
