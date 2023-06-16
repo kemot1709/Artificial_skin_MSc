@@ -52,6 +52,7 @@ class Ui_MainWindow(object):
     map = None
     map_calibrated = None
     map_255_self = None
+    map_255_calibrated_self = None
     last_timestamp = datetime.now()
     values = [0 for x in range(10)]
     image_cnt = IMAGE_COUNTER
@@ -191,6 +192,8 @@ class Ui_MainWindow(object):
         self.map_method_8 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_9 = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
+        self.map_255_calibrated_self = [[0 for x in range(self.columns)] for y in range(self.rows)]
+
         # self.statusbar = QtWidgets.QStatusBar(MainWindow)
         # self.statusbar.setObjectName("statusbar")
         # MainWindow.setStatusBar(self.statusbar)
@@ -215,6 +218,17 @@ class Ui_MainWindow(object):
 
     def recalibrateMap(self, new_map):
         self.map_calibrated = new_map
+
+        for i in range(self.columns):
+            for j in range(self.rows):
+                val_cal = int(255 - self.map_calibrated[i][j] * 255 / 4095)
+
+                if val_cal > 255:
+                    val_cal = 255
+                if val_cal < 0:
+                    val_cal = 0
+
+                self.map_255_calibrated_self[i][j] = val_cal
 
     def repaintMap(self):
         height = self.graphics_view.size().height()
@@ -330,7 +344,7 @@ class Ui_MainWindow(object):
 
         if IMAGE_ADD_CALIBRATION_MAP:
             c_name = 'c_' + name
-            c_image = im.fromarray(np.array(self.map_calibrated, dtype=np.uint8), mode='L')
+            c_image = im.fromarray(np.array(self.map_255_calibrated_self, dtype=np.uint8), mode='L')
             c_image.save(IMAGE_FOLDER + '/' + c_name)
 
         self.image_cnt = self.image_cnt + 1
