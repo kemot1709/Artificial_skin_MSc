@@ -367,11 +367,13 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     ser = Serial()
+    ser.set_ui(ui)
+    ser.connect_to_controller("COM3")
+    # TODO This if have to be changed
     if not ser:
         print("Board not detected or busy")
         sys.exit()
     else:
-        ser.set_ui(ui)
         MainWindow = QtWidgets.QMainWindow()
         ui.setupUi(MainWindow)
 
