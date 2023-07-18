@@ -70,7 +70,7 @@ class Serial(QtCore.QThread):
             print("Connected to: " + self.ser.portstr)
             self.start_communication_with_ui()
 
-        # Wywaliło komunikację
+        # Communication crashed
         except serial.serialutil.SerialException:
             return 0
 
