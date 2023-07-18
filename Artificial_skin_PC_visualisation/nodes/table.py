@@ -1,6 +1,6 @@
 import rospy
-from geometry_msgs.msg import Twist
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Image
+from std_msgs.msg import Bool, String, Int32
 
 
 class Topic:
@@ -11,48 +11,42 @@ class Topic:
         self.queue_size = queue_size
 
 
-def xxx_subscribtion_callback():
-    pass
-
-
-def xxx_subscribtion_callback2():
-    pass
-
-
-default_subscribed_topics = []
-ret = Topic("/sgn_on", 0, callback=xxx_subscribtion_callback())
-default_subscribed_topics.append(ret)
-ret = Topic("/sgn_calibrate", 0, callback=xxx_subscribtion_callback2())
-default_subscribed_topics.append(ret)
-
-default_published_topics = []
-ret = Topic("/raw_image", 0)
-default_published_topics.append(ret)
-ret = Topic("/status", 0)
-default_published_topics.append(ret)
-ret = Topic("/is_placed", 0)
-default_published_topics.append(ret)
-ret = Topic("/weight", 0)
-default_published_topics.append(ret)
-ret = Topic("/predicted_item", 0)
-default_published_topics.append(ret)
-ret = Topic("/location", 0)
-default_published_topics.append(ret)
-
-
 class TableNode:
     subscribed_topics = []
     published_topics = []
     subscribers = []
     publishers = []
 
+    on_flag = False
+    calibrate_flag = False
+
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
         if subscribed_topics is None:
+            default_subscribed_topics = []
+            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback())
+            default_subscribed_topics.append(ret)
+            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback())
+            default_subscribed_topics.append(ret)
+
             self.subscribed_topics = default_subscribed_topics
         else:
             self.subscribed_topics = subscribed_topics
 
         if published_topics is None:
+            default_published_topics = []
+            ret = Topic("/raw_image", Image)
+            default_published_topics.append(ret)
+            ret = Topic("/status", String)
+            default_published_topics.append(ret)
+            ret = Topic("/is_placed", Bool)
+            default_published_topics.append(ret)
+            ret = Topic("/weight", Int32)
+            default_published_topics.append(ret)
+            ret = Topic("/predicted_item", String)
+            default_published_topics.append(ret)
+            ret = Topic("/location", String)
+            default_published_topics.append(ret)
+
             self.published_topics = default_published_topics
         else:
             self.published_topics = published_topics
@@ -63,11 +57,26 @@ class TableNode:
             sub = self.Subscriber(topic)
             self.subscribers.append(sub)
         for topic in self.published_topics:
-            pub = self.Subscriber(topic)
+            pub = self.Publisher(topic)
             self.publishers.append(pub)
             pass
 
+    def sgn_on_callback(self, data=None):
+        if type(data) is Bool:
+            self.on_flag = data
+
+    def sgn_calibrate_callback(self, data=None):
+        if type(data) is Bool:
+            self.calibrate_flag = data
+
+    def publish_msg_on_topic(self, topic_name, msg):
+        for pub in self.publishers:
+            if pub.topic.name == topic_name:
+                pub.publish(msg)
+
     class Subscriber:
+        topic = None
+
         def __init__(self, topic):
             self.topic = topic
             self.callback_function = topic.callback
@@ -77,9 +86,15 @@ class TableNode:
             self.callback_function()
 
     class Publisher:
+        topic = None
+
         def __init__(self, topic):
-            self.pub = rospy.Publisher(+ topic)
+            self.topic = topic
+            self.pub = rospy.Publisher(topic.name)
 
         def publish(self, message):
-            # TODO check if message have proper type
-            self.pub.publish(message)
+            if type(message) is self.topic.msg_type:
+                self.pub.publish(message)
+            else:
+                print("Invalid publish message type, expected: " + self.topic.msg_type +
+                      ", received: " + message + ".")

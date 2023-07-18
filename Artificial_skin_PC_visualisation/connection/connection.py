@@ -12,6 +12,7 @@ class Serial(QtCore.QThread):
     pressure_map = None
     ser = None
     ui = None
+    data_receiver = None
 
     pressureMapUpdated = QtCore.pyqtSignal(int, int, list)
 
@@ -25,7 +26,15 @@ class Serial(QtCore.QThread):
         self.ui = ui
         self.start_communication_with_ui()
 
+    def set_data_receiver(self, receiver):
+        self.data_receiver = receiver
+
     def start_communication_with_ui(self):
+        if self.data_receiver is not None and self.ser is not None:
+            self.pressureMapUpdated.connect(self.data_receiver)
+            super().start()
+            return
+
         if self.ui is not None and self.ser is not None:
             self.pressureMapUpdated.connect(self.ui.updateMap)
             super().start()
