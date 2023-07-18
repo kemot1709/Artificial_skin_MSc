@@ -17,7 +17,7 @@ class Serial(QtCore.QThread):
     pressureMapUpdated = QtCore.pyqtSignal(int, int, list)
 
     def __init__(self):
-        super().__init__()
+        super(QtCore.QThread, self).__init__()
         self.pressure_map = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
         self.exitFlag = False

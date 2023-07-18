@@ -80,7 +80,7 @@ class TableNode:
         def __init__(self, topic):
             self.topic = topic
             self.callback_function = topic.callback
-            self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback())
+            self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback)
 
         def subscriber_callback(self):
             self.callback_function()
@@ -90,7 +90,7 @@ class TableNode:
 
         def __init__(self, topic):
             self.topic = topic
-            self.pub = rospy.Publisher(topic.name)
+            self.pub = rospy.Publisher(topic.name, topic.msg_type, queue_size=topic.queue_size)
 
         def publish(self, message):
             if type(message) is self.topic.msg_type:
