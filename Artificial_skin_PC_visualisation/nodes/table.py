@@ -2,6 +2,11 @@ import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
+from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
+
+
+# TODO make some defines for names of topics
+
 
 class Topic:
     def __init__(self, name, msg_type, callback=None, queue_size=10):
@@ -69,10 +74,32 @@ class TableNode:
         if type(data) is Bool:
             self.calibrate_flag = data
 
+    def publish_is_placed(self, boolean):
+        self.publish_msg_on_topic("/is_placed", prepare_bool_msg(boolean))
+
+    def publish_status(self, string):
+        self.publish_msg_on_topic("/status", prepare_string_msg(string))
+
+    def publish_predicted_item(self, string):
+        self.publish_msg_on_topic("/predicted_item", prepare_string_msg(string))
+
+    def publish_location(self, string):
+        self.publish_msg_on_topic("/location", prepare_string_msg(string))
+
+    def publish_weight(self, int32):
+        self.publish_msg_on_topic("/weight", prepare_int32_msg(int32))
+
+    def publish_raw_image(self, image):
+        self.publish_msg_on_topic("/raw_image", prepare_image_msg("Intelligent table node", image))
+
     def publish_msg_on_topic(self, topic_name, msg):
         for pub in self.publishers:
             if pub.topic.name == topic_name:
                 pub.publish(msg)
+
+    def new_image_from_sensor(self, image):
+        print("ELO")
+        pass
 
     class Subscriber:
         topic = None
@@ -80,7 +107,7 @@ class TableNode:
         def __init__(self, topic):
             self.topic = topic
             self.callback_function = topic.callback
-            self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback())
+            self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback)
 
         def subscriber_callback(self):
             self.callback_function()
@@ -90,11 +117,11 @@ class TableNode:
 
         def __init__(self, topic):
             self.topic = topic
-            self.pub = rospy.Publisher(topic.name)
+            self.pub = rospy.Publisher(topic.name, topic.msg_type, queue_size=topic.queue_size)
 
         def publish(self, message):
             if type(message) is self.topic.msg_type:
                 self.pub.publish(message)
             else:
-                print("Invalid publish message type, expected: " + self.topic.msg_type +
-                      ", received: " + message + ".")
+                print("Invalid publish message type, expected: " + str(self.topic.msg_type) +
+                      ", received: " + str(message) + ".")
