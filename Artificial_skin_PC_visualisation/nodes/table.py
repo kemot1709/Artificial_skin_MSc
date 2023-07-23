@@ -2,6 +2,8 @@ import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
+from PyQt5 import QtCore
+
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
 from sensor.sensor import Sensor
 
@@ -17,7 +19,7 @@ class Topic:
         self.queue_size = queue_size
 
 
-class TableNode:
+class TableNode(QtCore.QThread):
     subscribed_topics = []
     published_topics = []
     subscribers = []
@@ -27,13 +29,17 @@ class TableNode:
 
     on_flag = False
     calibrate_flag = False
+    new_image_flag = False
 
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
+        super(TableNode, self).__init__()
+        rospy.init_node(node_name)
+
         if subscribed_topics is None:
             default_subscribed_topics = []
-            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback())
+            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
             default_subscribed_topics.append(ret)
-            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback())
+            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
             default_subscribed_topics.append(ret)
 
             self.subscribed_topics = default_subscribed_topics
@@ -59,15 +65,15 @@ class TableNode:
         else:
             self.published_topics = published_topics
 
-        rospy.init_node(node_name)
-
         for topic in self.subscribed_topics:
             sub = self.Subscriber(topic)
             self.subscribers.append(sub)
         for topic in self.published_topics:
             pub = self.Publisher(topic)
             self.publishers.append(pub)
-            pass
+
+        self.exitFlag = False
+        self.start()
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -75,11 +81,12 @@ class TableNode:
 
     def sgn_on_callback(self, data=None):
         if type(data) is Bool:
-            self.on_flag = data
+            self.on_flag = data.data
+            self.new_image_flag = False
 
     def sgn_calibrate_callback(self, data=None):
         if type(data) is Bool:
-            self.calibrate_flag = data
+            self.calibrate_flag = data.data
 
     def get_calibration_flag(self):
         return self.calibrate_flag
@@ -111,20 +118,28 @@ class TableNode:
                 pub.publish(msg)
 
     def new_image_from_sensor(self, image):
-        self.publish_image(image)
+        self.new_image_flag = True
         print("ELO")
         pass
 
+    def run(self):
+        while not self.exitFlag:
+            if self.on_flag:
+                if self.new_image_flag:
+                    self.publish_image(self.sensor.image_actual)
+                    self.new_image_flag = False
+
     class Subscriber:
         topic = None
+        callback_function = None
 
         def __init__(self, topic):
             self.topic = topic
             self.callback_function = topic.callback
             self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback)
 
-        def subscriber_callback(self):
-            self.callback_function()
+        def subscriber_callback(self, data):
+            self.callback_function(data)
 
     class Publisher:
         topic = None
