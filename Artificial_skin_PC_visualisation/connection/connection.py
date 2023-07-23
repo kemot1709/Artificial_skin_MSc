@@ -1,5 +1,3 @@
-import sys
-import os
 from sys import platform
 
 import serial
@@ -30,7 +28,6 @@ class Serial(QtCore.QThread):
 
     def set_data_receiver(self, receiver):
         self.data_receiver = receiver
-        pass
 
     def start_communication_with_ui(self):
         if self.data_receiver is not None and self.ser is not None:
