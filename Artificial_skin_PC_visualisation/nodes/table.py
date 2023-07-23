@@ -3,6 +3,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
+from sensor.sensor import Sensor
 
 
 # TODO make some defines for names of topics
@@ -21,6 +22,8 @@ class TableNode:
     published_topics = []
     subscribers = []
     publishers = []
+
+    sensor = None
 
     on_flag = False
     calibrate_flag = False
@@ -66,6 +69,10 @@ class TableNode:
             self.publishers.append(pub)
             pass
 
+    def set_sensor(self, sensor):
+        self.sensor = sensor
+        self.sensor.set_parent_node(self)
+
     def sgn_on_callback(self, data=None):
         if type(data) is Bool:
             self.on_flag = data
@@ -73,6 +80,12 @@ class TableNode:
     def sgn_calibrate_callback(self, data=None):
         if type(data) is Bool:
             self.calibrate_flag = data
+
+    def get_calibration_flag(self):
+        return self.calibrate_flag
+
+    def get_on_flag(self):
+        return self.on_flag
 
     def publish_is_placed(self, boolean):
         self.publish_msg_on_topic("/is_placed", prepare_bool_msg(boolean))
@@ -89,7 +102,7 @@ class TableNode:
     def publish_weight(self, int32):
         self.publish_msg_on_topic("/weight", prepare_int32_msg(int32))
 
-    def publish_raw_image(self, image):
+    def publish_image(self, image):
         self.publish_msg_on_topic("/raw_image", prepare_image_msg("Intelligent table node", image))
 
     def publish_msg_on_topic(self, topic_name, msg):
@@ -98,6 +111,7 @@ class TableNode:
                 pub.publish(msg)
 
     def new_image_from_sensor(self, image):
+        self.publish_image(image)
         print("ELO")
         pass
 

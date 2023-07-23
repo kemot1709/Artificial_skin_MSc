@@ -1,3 +1,5 @@
+import sys
+import os
 from sys import platform
 
 import serial
@@ -32,7 +34,7 @@ class Serial(QtCore.QThread):
 
     def start_communication_with_ui(self):
         if self.data_receiver is not None and self.ser is not None:
-            self.pressureMapUpdated.connect(self.data_receiver.data_receiver)
+            self.pressureMapUpdated.connect(self.data_receiver)
             self.start()
             return
 
@@ -43,7 +45,7 @@ class Serial(QtCore.QThread):
 
     def send_data_explicitely(self):
         if self.data_receiver is not None and self.ser is not None:
-            self.data_receiver.data_receiver(self.rows, self.columns, self.pressure_map)
+            self.data_receiver(self.rows, self.columns, self.pressure_map)
             return
 
         if self.ui is not None and self.ser is not None:
@@ -91,7 +93,7 @@ class Serial(QtCore.QThread):
                         i = 0
                         for line in lines:
                             if i >= self.rows:
-                                continue
+                                break
                             list_of_values = line.strip().split(',')
 
                             j = 0
@@ -111,3 +113,6 @@ class Serial(QtCore.QThread):
                         self.send_data_explicitely()
             except Exception as e:
                 print(e)
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
