@@ -3,6 +3,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
 from PyQt5 import QtCore
+from enum import Enum
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
 from sensor.sensor import Sensor
@@ -20,6 +21,27 @@ class Topic:
         self.queue_size = queue_size
 
 
+class NodeStatus(Enum):
+    unknown = 0
+    not_connected = 1
+    connected = 2
+    connection_crashed = 3
+    connection_bad_messages = 4
+    working = 10
+    calibrating = 11
+
+
+statusTranslationDictionary = {
+    NodeStatus.unknown: "Unknown",
+    NodeStatus.not_connected: "Initialized but not connected to controller",
+    NodeStatus.connected: "Initialized, connected to controller but turned off",
+    NodeStatus.connection_crashed: "Connection with controller is interrupted",
+    NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
+    NodeStatus.working: "Node working well",
+    NodeStatus.calibrating: "Node calibrate itself",
+}
+
+
 class TableNode(QtCore.QThread):
     subscribed_topics = []
     published_topics = []
@@ -31,6 +53,7 @@ class TableNode(QtCore.QThread):
     on_flag = False
     calibrate_flag = False
     new_image_flag = False
+    node_status = NodeStatus.unknown
 
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
         super(TableNode, self).__init__()
@@ -118,9 +141,27 @@ class TableNode(QtCore.QThread):
             if pub.topic.name == topic_name:
                 pub.publish(msg)
 
-    def new_image_from_sensor(self, image):
+    def new_image_from_sensor(self):
         self.new_image_flag = True
-        debug(message="ELO")
+
+    def is_item_placed(self):
+        # TODO
+        return False
+
+    def get_predicted_item(self):
+        # TODO
+        return "Nothing"
+
+    def get_predicted_location(self):
+        # TODO
+        return "Nothing"
+
+    def get_node_status(self):
+        return statusTranslationDictionary[self.node_status]
+
+    def get_predicted_weight(self):
+        # TODO
+        return 100
 
     def run(self):
         while not self.exitFlag:
@@ -128,7 +169,15 @@ class TableNode(QtCore.QThread):
                 if self.calibrate_flag:
                     self.sensor.calibrate_sensor(self.sensor.image_actual)
 
+                #####
                 self.publish_image(self.sensor.image_actual)
+                self.publish_is_placed(self.is_item_placed())
+                self.publish_predicted_item(self.get_predicted_item())
+                self.publish_location(self.get_predicted_location())
+                self.publish_status(self.get_node_status())
+                self.publish_weight(self.get_predicted_weight())
+                #####
+
                 self.new_image_flag = False
 
     class Subscriber:

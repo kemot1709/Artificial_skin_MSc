@@ -31,6 +31,11 @@ def parse_np_image_to_msg(np_image):
     return msg
 
 
+def mask_np_image(np_image, mask):
+    # TODO
+    pass
+
+
 def process_raw_image_through_calibration(rows, columns, image, calibration_image):
     # TODO implement all possible compensation methods
     mult_b = 0.98

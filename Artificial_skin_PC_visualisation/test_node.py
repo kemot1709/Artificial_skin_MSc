@@ -23,18 +23,9 @@ def default_port_name():
 
 if __name__ == "__main__":
     sensor = Sensor(default_port_name())
-    sensor.connect_to_sensor()
+    sensor.connect_to_controller()
     node = TableNode()
     node.set_sensor(sensor)
 
-    weight = 0
     while 1:
-        node.publish_is_placed(False)
-        weight += 1
-        node.publish_weight(weight)
-        node.publish_predicted_item("dupa")
-        node.publish_status("dupa")
-        node.publish_location("dupa")
-        time.sleep(1)
-        node.publish_is_placed(True)
-        time.sleep(1)
+        pass

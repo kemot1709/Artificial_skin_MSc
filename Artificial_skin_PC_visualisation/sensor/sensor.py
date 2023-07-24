@@ -24,13 +24,14 @@ class Sensor:
     def set_usb_port(self, usb_port):
         self.usb_port = usb_port
 
-    def connect_to_sensor(self):
+    def connect_to_controller(self):
         self.ser.connect_to_controller(self.usb_port)
 
     def set_parent_node(self, node):
         self.parent_node = node
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
+        debug(DBGLevel.INFO, "New data received from controller")
         self.image_actual = parse_data_to_np_image(n_rows, n_columns, new_pressure_map)
 
         if self.image_calibrated is not None:
@@ -38,8 +39,8 @@ class Sensor:
                                                                                  self.image_calibrated)
 
         if self.parent_node is not None:
-            self.parent_node.new_image_from_sensor(self.image_actual)
+            self.parent_node.new_image_from_sensor()
 
     def calibrate_sensor(self, raw_data):
-        self.image_calibrated = raw_data
         debug(DBGLevel.INFO, "Calibrate sensor")
+        self.image_calibrated = raw_data
