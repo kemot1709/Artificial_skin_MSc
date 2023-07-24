@@ -35,7 +35,6 @@ if __name__ == "__main__":
         node.publish_predicted_item("dupa")
         node.publish_status("dupa")
         node.publish_location("dupa")
-        # node.publish_image("dupa")
         time.sleep(1)
         node.publish_is_placed(True)
         time.sleep(1)

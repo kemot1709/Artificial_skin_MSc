@@ -2,6 +2,7 @@ from connection.connection import Serial
 
 from data_parsing import parse_data_to_np_image, parse_np_image_to_msg, cast_data_to_uint8, \
     process_raw_image_through_calibration
+from debug import *
 
 
 class Sensor:
@@ -28,21 +29,17 @@ class Sensor:
 
     def set_parent_node(self, node):
         self.parent_node = node
-        pass
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
-        if self.parent_node is not None and self.parent_node.get_calibration_flag():
-            # TODO new_pressure_map is 4095, calition should be 255
-            # self.calibrate_sensor(new_pressure_map)
-            pass
         self.image_actual = parse_data_to_np_image(n_rows, n_columns, new_pressure_map)
-        # TODO image_actual is 255, calition takes 4095
-        # if self.image_calibrated is not None:
-        #     self.image_actual_calibrated = process_raw_image_through_calibration(n_rows, n_columns, self.image_actual,
-        #                                                                          self.image_calibrated)
+
+        if self.image_calibrated is not None:
+            self.image_actual_calibrated = process_raw_image_through_calibration(n_rows, n_columns, self.image_actual,
+                                                                                 self.image_calibrated)
 
         if self.parent_node is not None:
             self.parent_node.new_image_from_sensor(self.image_actual)
 
     def calibrate_sensor(self, raw_data):
         self.image_calibrated = raw_data
+        debug(DBGLevel.INFO, "Calibrate sensor")

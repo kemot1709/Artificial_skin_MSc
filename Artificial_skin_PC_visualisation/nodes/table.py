@@ -6,6 +6,7 @@ from PyQt5 import QtCore
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
 from sensor.sensor import Sensor
+from debug import *
 
 
 # TODO make some defines for names of topics
@@ -119,15 +120,16 @@ class TableNode(QtCore.QThread):
 
     def new_image_from_sensor(self, image):
         self.new_image_flag = True
-        print("ELO")
-        pass
+        debug(message="ELO")
 
     def run(self):
         while not self.exitFlag:
-            if self.on_flag:
-                if self.new_image_flag:
-                    self.publish_image(self.sensor.image_actual)
-                    self.new_image_flag = False
+            if self.on_flag and self.new_image_flag:
+                if self.calibrate_flag:
+                    self.sensor.calibrate_sensor(self.sensor.image_actual)
+
+                self.publish_image(self.sensor.image_actual)
+                self.new_image_flag = False
 
     class Subscriber:
         topic = None

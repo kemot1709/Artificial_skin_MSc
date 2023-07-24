@@ -7,6 +7,8 @@ import serial.tools.list_ports as list_ports
 
 from PyQt5 import QtCore
 
+from debug import *
+
 
 class Serial(QtCore.QThread):
     rows = 16
@@ -67,7 +69,7 @@ class Serial(QtCore.QThread):
             self.ser.stopbits = serial.STOPBITS_ONE
             self.ser.bytesize = serial.EIGHTBITS
 
-            print("Connected to: " + self.ser.portstr)
+            debug(DBGLevel.CRITICAL, "Connected to: " + self.ser.portstr)
             self.start_communication_with_ui()
 
         # Communication crashed
@@ -103,7 +105,7 @@ class Serial(QtCore.QThread):
                                 try:
                                     self.pressure_map[j][i] = float(value)
                                 except:
-                                    print("Kurwaaaaaaaaaaaaa", i, j, int(value))
+                                    debug(DBGLevel.CRITICAL, "Kurwaaaaaaaaaaaaa" + i + j + int(value))
                                     pass
                                 j = j + 1
                             i = i + 1
