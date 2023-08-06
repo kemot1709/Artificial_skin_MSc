@@ -1,4 +1,8 @@
 import sys
+
+sys.path.insert(0, '/usr/local/lib/python3.8/site-packages')
+print(sys.path)
+
 from sys import platform
 import time
 from datetime import datetime, timedelta
@@ -352,10 +356,10 @@ class Ui_MainWindow(object):
     def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:
             file.write(
-                    "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                            self.values[0], self.values[1], self.values[2], self.values[3],
-                            self.values[4], self.values[5], self.values[6], self.values[7],
-                            self.values[8]))
+                "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
+                    self.values[0], self.values[1], self.values[2], self.values[3],
+                    self.values[4], self.values[5], self.values[6], self.values[7],
+                    self.values[8]))
 
     def buttonCalibrateHandler(self):
         self.recalibrateMap(self.map)

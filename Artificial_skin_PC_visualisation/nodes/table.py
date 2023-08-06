@@ -2,6 +2,16 @@ import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
+from PyQt5 import QtCore
+from enum import Enum
+
+from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
+from sensor.sensor import Sensor
+from debug import *
+
+
+# TODO make some defines for names of topics
+
 
 class Topic:
     def __init__(self, name, msg_type, callback=None, queue_size=10):
@@ -11,21 +21,49 @@ class Topic:
         self.queue_size = queue_size
 
 
-class TableNode:
+class NodeStatus(Enum):
+    unknown = 0
+    not_connected = 1
+    connected = 2
+    connection_crashed = 3
+    connection_bad_messages = 4
+    working = 10
+    calibrating = 11
+
+
+statusTranslationDictionary = {
+    NodeStatus.unknown: "Unknown",
+    NodeStatus.not_connected: "Initialized but not connected to controller",
+    NodeStatus.connected: "Initialized, connected to controller but turned off",
+    NodeStatus.connection_crashed: "Connection with controller is interrupted",
+    NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
+    NodeStatus.working: "Node working well",
+    NodeStatus.calibrating: "Node calibrate itself",
+}
+
+
+class TableNode(QtCore.QThread):
     subscribed_topics = []
     published_topics = []
     subscribers = []
     publishers = []
 
+    sensor = None
+
     on_flag = False
     calibrate_flag = False
+    new_image_flag = False
+    node_status = NodeStatus.unknown
 
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
+        super(TableNode, self).__init__()
+        rospy.init_node(node_name)
+
         if subscribed_topics is None:
             default_subscribed_topics = []
-            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback())
+            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
             default_subscribed_topics.append(ret)
-            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback())
+            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
             default_subscribed_topics.append(ret)
 
             self.subscribed_topics = default_subscribed_topics
@@ -51,39 +89,108 @@ class TableNode:
         else:
             self.published_topics = published_topics
 
-        rospy.init_node(node_name)
-
         for topic in self.subscribed_topics:
             sub = self.Subscriber(topic)
             self.subscribers.append(sub)
         for topic in self.published_topics:
             pub = self.Publisher(topic)
             self.publishers.append(pub)
-            pass
+
+        self.exitFlag = False
+        self.start()
+
+    def set_sensor(self, sensor):
+        self.sensor = sensor
+        self.sensor.set_parent_node(self)
 
     def sgn_on_callback(self, data=None):
         if type(data) is Bool:
-            self.on_flag = data
+            self.on_flag = data.data
+            self.new_image_flag = False
 
     def sgn_calibrate_callback(self, data=None):
         if type(data) is Bool:
-            self.calibrate_flag = data
+            self.calibrate_flag = data.data
+
+    def get_calibration_flag(self):
+        return self.calibrate_flag
+
+    def get_on_flag(self):
+        return self.on_flag
+
+    def publish_is_placed(self, boolean):
+        self.publish_msg_on_topic("/is_placed", prepare_bool_msg(boolean))
+
+    def publish_status(self, string):
+        self.publish_msg_on_topic("/status", prepare_string_msg(string))
+
+    def publish_predicted_item(self, string):
+        self.publish_msg_on_topic("/predicted_item", prepare_string_msg(string))
+
+    def publish_location(self, string):
+        self.publish_msg_on_topic("/location", prepare_string_msg(string))
+
+    def publish_weight(self, int32):
+        self.publish_msg_on_topic("/weight", prepare_int32_msg(int32))
+
+    def publish_image(self, image):
+        self.publish_msg_on_topic("/raw_image", prepare_image_msg("Intelligent table node", image))
 
     def publish_msg_on_topic(self, topic_name, msg):
         for pub in self.publishers:
             if pub.topic.name == topic_name:
                 pub.publish(msg)
 
+    def new_image_from_sensor(self):
+        self.new_image_flag = True
+
+    def is_item_placed(self):
+        # TODO
+        return False
+
+    def get_predicted_item(self):
+        # TODO
+        return "Nothing"
+
+    def get_predicted_location(self):
+        # TODO
+        return "Nothing"
+
+    def get_node_status(self):
+        return statusTranslationDictionary[self.node_status]
+
+    def get_predicted_weight(self):
+        # TODO
+        return 100
+
+    def run(self):
+        while not self.exitFlag:
+            if self.on_flag and self.new_image_flag:
+                if self.calibrate_flag:
+                    self.sensor.calibrate_sensor(self.sensor.image_actual)
+
+                #####
+                self.publish_image(self.sensor.image_actual)
+                self.publish_is_placed(self.is_item_placed())
+                self.publish_predicted_item(self.get_predicted_item())
+                self.publish_location(self.get_predicted_location())
+                self.publish_status(self.get_node_status())
+                self.publish_weight(self.get_predicted_weight())
+                #####
+
+                self.new_image_flag = False
+
     class Subscriber:
         topic = None
+        callback_function = None
 
         def __init__(self, topic):
             self.topic = topic
             self.callback_function = topic.callback
             self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback)
 
-        def subscriber_callback(self):
-            self.callback_function()
+        def subscriber_callback(self, data):
+            self.callback_function(data)
 
     class Publisher:
         topic = None
@@ -96,5 +203,5 @@ class TableNode:
             if type(message) is self.topic.msg_type:
                 self.pub.publish(message)
             else:
-                print("Invalid publish message type, expected: " + self.topic.msg_type +
-                      ", received: " + message + ".")
+                print("Invalid publish message type, expected: " + str(self.topic.msg_type) +
+                      ", received: " + str(message) + ".")

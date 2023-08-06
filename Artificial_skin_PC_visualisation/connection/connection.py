@@ -1,9 +1,13 @@
+import sys
+import os
 from sys import platform
 
 import serial
 import serial.tools.list_ports as list_ports
 
 from PyQt5 import QtCore
+
+from debug import *
 
 
 class Serial(QtCore.QThread):
@@ -17,7 +21,7 @@ class Serial(QtCore.QThread):
     pressureMapUpdated = QtCore.pyqtSignal(int, int, list)
 
     def __init__(self):
-        super(QtCore.QThread, self).__init__()
+        super(Serial, self).__init__()
         self.pressure_map = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
         self.exitFlag = False
@@ -32,12 +36,22 @@ class Serial(QtCore.QThread):
     def start_communication_with_ui(self):
         if self.data_receiver is not None and self.ser is not None:
             self.pressureMapUpdated.connect(self.data_receiver)
-            super().start()
+            self.start()
             return
 
         if self.ui is not None and self.ser is not None:
             self.pressureMapUpdated.connect(self.ui.updateMap)
-            super().start()
+            self.start()
+            return
+
+    def send_data_explicitely(self):
+        if self.data_receiver is not None and self.ser is not None:
+            self.data_receiver(self.rows, self.columns, self.pressure_map)
+            return
+
+        if self.ui is not None and self.ser is not None:
+            self.ui.updateMap(self.rows, self.columns, self.pressure_map)
+            return
 
     @staticmethod
     def get_list_of_ports():
@@ -48,18 +62,6 @@ class Serial(QtCore.QThread):
 
     def connect_to_controller(self, port):
         try:
-            # if platform == "linux" or platform == "linux2":
-            #     # os.chmod('/dev/ttyUSB0', 0o666)
-            #     self.ser = serial.Serial('/dev/ttyUSB0')
-            # elif platform == "darwin":
-            #     print("Change your computer")
-            #     return 0
-            # elif platform == "win32":
-            #     self.ser = serial.Serial('COM3')
-            # else:
-            #     print("Unknown operating system")
-            #     return 0
-
             self.ser = serial.Serial(port)
             self.ser.baudrate = 115200
             self.ser.timeout = 0.050
@@ -67,7 +69,7 @@ class Serial(QtCore.QThread):
             self.ser.stopbits = serial.STOPBITS_ONE
             self.ser.bytesize = serial.EIGHTBITS
 
-            print("Connected to: " + self.ser.portstr)
+            debug(DBGLevel.CRITICAL, "Connected to: " + self.ser.portstr)
             self.start_communication_with_ui()
 
         # Communication crashed
@@ -84,7 +86,7 @@ class Serial(QtCore.QThread):
                         input_msg = self.ser.readline().decode('utf-8')
                     except:
                         input_msg = str()
-                        return
+                        continue
 
                     if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
                         lines = input_msg.strip().split('|')
@@ -92,7 +94,7 @@ class Serial(QtCore.QThread):
                         i = 0
                         for line in lines:
                             if i >= self.rows:
-                                continue
+                                break
                             list_of_values = line.strip().split(',')
 
                             j = 0
@@ -103,10 +105,15 @@ class Serial(QtCore.QThread):
                                 try:
                                     self.pressure_map[j][i] = float(value)
                                 except:
-                                    print("Kurwaaaaaaaaaaaaa", i, j, int(value))
+                                    debug(DBGLevel.CRITICAL, "Kurwaaaaaaaaaaaaa" + i + j + int(value))
                                     pass
                                 j = j + 1
                             i = i + 1
-                        self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
+                            # TODO multithreating on python 2
+                        # self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
+                        self.send_data_explicitely()
             except Exception as e:
                 print(e)
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
