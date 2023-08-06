@@ -346,8 +346,8 @@ class Ui_MainWindow(object):
             c_image = im.fromarray(np.array(self.map_255_calibrated_self, dtype=np.uint8), mode='L')
             c_image.save(IMAGE_FOLDER + '/' + c_name)
 
+        print('image saved\t' + str(self.image_cnt))
         self.image_cnt = self.image_cnt + 1
-        print('image saved')
 
     def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:

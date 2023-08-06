@@ -40,6 +40,7 @@ class ItemShape(Enum):
     none = 0
     round = 1
     rectangle = 2
+    other = 9
 
 
 class ItemShapeDetails(Enum):
@@ -51,8 +52,9 @@ class ItemShapeDetails(Enum):
 class ItemPlacement(Enum):
     unknown = 0
     center = 1
-    edge = 2
-    partially_out = 3
+    side = 2
+    edge = 3
+    partially_out = 4
 
 
 itemDictionary = {
@@ -89,9 +91,10 @@ handTypeDictionary = {
 }
 
 placementDictionary = {
-        "center": ItemType.hand_light,
-        "edge":   ItemType.hand_mid,
-        "out":    ItemType.hand_hard,
+        "center": ItemPlacement.center,
+        "side":   ItemPlacement.side,
+        "edge":   ItemPlacement.edge,
+        "out":    ItemPlacement.partially_out,
 }
 
 
@@ -156,6 +159,9 @@ class Item:
             for word in words:
                 if word.startswith("n"):
                     self.type = itemDictionary[word[1:]]
+
+                    if self.type == ItemType.hand_any:
+                        self.shape = ItemShape.other
 
                 if word.startswith("w") and word[1:].isnumeric():
                     self.weight = int(word[1:])
