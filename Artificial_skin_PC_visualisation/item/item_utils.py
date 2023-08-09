@@ -27,3 +27,13 @@ def selectDesiredItems(all_items, item_filter):
             selected_items.append(item)
 
     return selected_items
+
+
+def selectDesiredPlacement(all_items, placement_filter):
+    selected_items = []
+
+    for item in all_items:
+        if item.placement in placement_filter:
+            selected_items.append(item)
+
+    return selected_items

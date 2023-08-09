@@ -196,7 +196,7 @@ class Item:
                 if word.startswith("t"):
                     word = word[1:]
                     if word in itemShapeDetailsDictionary:
-                        self.placement = itemShapeDetailsDictionary[word]
+                        self.shape_details = itemShapeDetailsDictionary[word]
 
     def setMask(self, mask):
         self.image_mask = mask
@@ -207,7 +207,7 @@ class Item:
         self.setExtractedImage()
 
     def setExtractedImage(self):
-        if self.image_calibration in None:
+        if self.image_calibration is None:
             self.image_extracted = self.image
             return
 
