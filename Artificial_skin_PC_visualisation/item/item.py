@@ -5,6 +5,20 @@ from PIL import Image as im
 import numpy as np
 
 
+#####
+# Item naming v2
+#   n - name of object @itemDictionary
+#   w - weight in grams
+#   d - dimentions of object
+#       <value>x<value>     for rectangle objects
+#       <value>             for round objects
+#   s - item details, applicable for @foodTrayDictionary and @handTypeDictionary
+#   p - placement @placementDictionary
+#   t - shape details @itemShapeDetailsDictionary
+#   c - potentially corrupted - do not use for learn purposes ("true" or "false")
+#####
+
+
 class ItemType(Enum):
     none = 0
     unknown = 1
@@ -99,7 +113,7 @@ placementDictionary = {
 
 
 class Item:
-    def __init__(self):
+    def __init__(self, mask=None):
         self.id = 0
         self.filename = None
         self.type = ItemType.none
@@ -112,8 +126,9 @@ class Item:
         self.dim2 = 0
         self.image = None
         self.image_calibration = None
-        self.image_mask = None
+        self.image_mask = mask
         self.image_extracted = None
+        self.potentially_corrupted = False
 
     def getLabelsFromFilename(self, path: str, filename: str, image_id: int):
         if "v2" in path:
@@ -198,6 +213,11 @@ class Item:
                     if word in itemShapeDetailsDictionary:
                         self.shape_details = itemShapeDetailsDictionary[word]
 
+                if word.startswith("c"):
+                    word = word[1:]
+                    if word == "true" or word == "TRUE" or word == "True":
+                        self.potentially_corrupted = True
+
     def setMask(self, mask):
         self.image_mask = mask
         self.setExtractedImage()
@@ -209,19 +229,19 @@ class Item:
     def setExtractedImage(self):
         if self.image_calibration is None:
             self.image_extracted = self.image
+            self.maskExtractedImage()
             return
+        self.image_extracted = self.image - self.image_calibration
+        self.maskExtractedImage()
 
-        extracted = self.image - self.image_calibration
+    def maskExtractedImage(self):
         if self.image_mask is not None:
-            mask = np.array(self.image_mask, dtype=int)
-        else:
-            mask = np.full((16, 16), 1, dtype=int)
-
-        for i in range(16):
-            for j in range(16):
-                if extracted[i][j] < 0 or mask[i][j] == 0:
-                    extracted[i][j] = 0
-        self.image_extracted = np.array(extracted)
+            extracted = self.image_extracted
+            for i in range(16):
+                for j in range(16):
+                    if extracted[i][j] < 0 or self.image_mask[i][j] == 0:
+                        extracted[i][j] = 0
+            self.image_extracted = np.array(extracted)
 
     def getExtractedImage(self):
         return self.image_extracted
