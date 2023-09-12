@@ -7,6 +7,10 @@ from enum import Enum
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
 from sensor.sensor import Sensor
+from sensor.params import ImageMask
+from item.item import Item, ItemPlacement, ItemType
+from classifier.position_recognition import recognise_position
+from classifier.weight_estimation import estimate_weight
 from debug import *
 
 
@@ -32,13 +36,13 @@ class NodeStatus(Enum):
 
 
 statusTranslationDictionary = {
-    NodeStatus.unknown: "Unknown",
-    NodeStatus.not_connected: "Initialized but not connected to controller",
-    NodeStatus.connected: "Initialized, connected to controller but turned off",
-    NodeStatus.connection_crashed: "Connection with controller is interrupted",
-    NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
-    NodeStatus.working: "Node working well",
-    NodeStatus.calibrating: "Node calibrate itself",
+        NodeStatus.unknown:                 "Unknown",
+        NodeStatus.not_connected:           "Initialized but not connected to controller",
+        NodeStatus.connected:               "Initialized, connected to controller but turned off",
+        NodeStatus.connection_crashed:      "Connection with controller is interrupted",
+        NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
+        NodeStatus.working:                 "Node working well",
+        NodeStatus.calibrating:             "Node calibrate itself",
 }
 
 
@@ -54,6 +58,10 @@ class TableNode(QtCore.QThread):
     calibrate_flag = False
     new_image_flag = False
     node_status = NodeStatus.unknown
+
+    mask = ImageMask()
+    actual_item = None
+    item_cnt = 1
 
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
         super(TableNode, self).__init__()
@@ -145,29 +153,57 @@ class TableNode(QtCore.QThread):
         self.new_image_flag = True
 
     def is_item_placed(self):
-        # TODO
-        return False
+        if all(i <= 10 for i in self.actual_item.getExtractedImage()):
+            return False
+        else:
+            return True
 
     def get_predicted_item(self):
-        # TODO
-        return "Nothing"
+        if self.is_item_placed():
+            pass
+            # TODO
+        else:
+            return "Nothing"
 
     def get_predicted_location(self):
-        # TODO
-        return "Nothing"
+        if self.actual_item.placement is not ItemPlacement.unknown:
+            # TODO
+            pass
+        else:
+            return "Nothing"
 
     def get_node_status(self):
         return statusTranslationDictionary[self.node_status]
 
     def get_predicted_weight(self):
-        # TODO
-        return 100
+        if self.actual_item.weight > 0:
+            return self.actual_item.weight
+        else:
+            return 0
+
+    def exstract_image_from_sensor_data(self):
+        # Calibration image is not nessecarry, because sensor calibrated this data on its own
+        self.actual_item = Item(self.mask.getMask())
+        self.actual_item.image = self.sensor.image_actual_calibrated
+        self.actual_item.setExtractedImage()
+        self.actual_item.id = self.item_cnt
+        self.item_cnt += 1
+
+    def make_recognition_of_image(self):
+        if self.is_item_placed():
+            self.actual_item.placement = recognise_position(self.actual_item.getExtractedImage(), self.mask.getMask(),
+                                                            [1.5, 2.5])
+            self.actual_item.weight = estimate_weight(self.actual_item.getExtractedImage())
+            # TODO item recognition
+            pass
 
     def run(self):
         while not self.exitFlag:
             if self.on_flag and self.new_image_flag:
                 if self.calibrate_flag:
                     self.sensor.calibrate_sensor(self.sensor.image_actual)
+                self.exstract_image_from_sensor_data()
+                self.make_recognition_of_image()
 
                 #####
                 self.publish_image(self.sensor.image_actual)

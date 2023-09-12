@@ -54,7 +54,7 @@ def get_distance_to_mask(image_mask, point):
     distances = np.round(
             np.sqrt(
                     (np.where(e_image_mask == 0)[1] - point[0]) ** 2 + (
-                                np.where(e_image_mask == 0)[0] - point[1]) ** 2), 2)
+                            np.where(e_image_mask == 0)[0] - point[1]) ** 2), 2)
     return np.min(distances)
 
 
