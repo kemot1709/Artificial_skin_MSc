@@ -12,7 +12,7 @@ __pycache__/
 *.py[cod]
 
 # Temporary and test files
-temp.py
+temp*.py
 
 # Compiled classifier
 *.h5
