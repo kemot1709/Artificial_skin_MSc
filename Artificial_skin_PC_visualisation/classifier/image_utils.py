@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import keras
+import cv2
 
 from item.item import Item, ItemType
 from item.en import itemTranslationDict
@@ -55,7 +56,7 @@ class ImageParser:
     def parseImagesToArray(self, itemlist):
         imageList = []
         for item in itemlist:
-            imageList.append(np.array(item.image))# - np.array(item.image_calibration))
+            imageList.append(np.array(item.image))  # - np.array(item.image_calibration))
         imageList = np.array(imageList)
         return imageList
 
@@ -101,3 +102,10 @@ def splitDataToTraining(data, training_size, valuation_size, test_size=0.0):
     if test_size > 0.0:
         return [train_data, val_data, test_data]
     return [train_data, val_data]
+
+
+def stretch_image(image, stretch_x, stretch_y):
+    image = np.uint8(image)
+    stretched_image = cv2.resize(image, None, fx=stretch_x, fy=stretch_y, interpolation=cv2.INTER_LINEAR)
+    stretched_image = np.uint8(stretched_image)
+    return stretched_image

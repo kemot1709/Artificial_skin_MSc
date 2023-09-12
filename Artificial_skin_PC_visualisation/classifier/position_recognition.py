@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from item.item import ItemPlacement, ItemShape, ItemType
 from sensor.params import ImageMask
 from debug import debug, DBGLevel
+from classifier.image_utils import stretch_image
 
 
 def get_image_centroid(image, output_type):
@@ -25,14 +26,7 @@ def get_image_centroid(image, output_type):
     return [centroid_x, centroid_y]
 
 
-def stretch_image(image, stretch_x, stretch_y):
-    image = np.uint8(image)
-    stretched_image = cv2.resize(image, None, fx=stretch_x, fy=stretch_y, interpolation=cv2.INTER_LINEAR)
-    stretched_image = np.uint8(stretched_image)
-    return stretched_image
-
-
-def find_histogram_peak(histogram):
+def find_histogram_peak(histogram, can_ret_none=True):
     idx_max_val = np.argmax(histogram)
     idx_all_max_vals = np.where(histogram == histogram[idx_max_val])
 
@@ -40,13 +34,28 @@ def find_histogram_peak(histogram):
     if len(idx_all_max_vals[0]) > 1:
         for i in range(len(idx_all_max_vals[0]) - 1):
             if idx_all_max_vals[0][i + 1] - idx_all_max_vals[0][i] != 1:
-                return -1
+                if can_ret_none:
+                    return -1
+                else:
+                    return np.max(idx_all_max_vals)
 
         # Neighbour peaks
         idx_avg = np.average(idx_all_max_vals)
         return idx_avg
 
     return idx_max_val
+
+
+def get_distance_to_mask(image_mask, point):
+    e_image_mask = np.pad(image_mask, [(1, 1), (1, 1)], mode='constant', constant_values=0)
+    point[0] += 1
+    point[1] += 1
+
+    distances = np.round(
+            np.sqrt(
+                    (np.where(e_image_mask == 0)[1] - point[0]) ** 2 + (
+                                np.where(e_image_mask == 0)[0] - point[1]) ** 2), 2)
+    return np.min(distances)
 
 
 def get_histogram_of_weight_from_point(image, point):
@@ -88,17 +97,59 @@ def get_histogram_of_weight_from_point(image, point):
     return hist_values_weight
 
 
+def sum_image_values_on_mask(image, mask_image):
+    sum_zeros = 0
+    sum_ones = 0
+
+    mask_shape = list(mask_image.shape)
+    for i in range(0, mask_shape[0]):
+        for j in range(0, mask_shape[1]):
+            if mask_image[i, j] == 0:
+                sum_zeros += image[i, j]
+            else:
+                sum_ones += image[i, j]
+    return [sum_zeros, sum_ones]
+
+
+# TODO works fucking badly but at least it is sth
 def check_item_on_edge(image, mask):
     image = np.uint8(image)
     max_image_val = np.max(image)
     e_image = np.pad(image, [(1, 1), (1, 1)], mode='constant', constant_values=0)
     e_image_shape = list(e_image.shape)
 
+    # Max val is on border or next to border
+    idx_max_val = np.unravel_index(np.argmax(e_image), e_image.shape)
+    if mask.e_bordered_mask[idx_max_val] == 0 or mask.e_2bordered_mask[idx_max_val] == 0:
+        return True
+
+    # Whole item inside of table
+    potentially_on_edge = False
     for i in range(1, e_image_shape[0] - 1):
         for j in range(1, e_image_shape[1] - 1):
-            if mask.e_bordered_mask[i, j] == 0 and e_image[i, j] > max_image_val / 10.0:
+            if mask.e_bordered_mask[i, j] == 0 and e_image[i, j] > max_image_val / 10.0 and e_image[i, j] > 5:
                 # Bordered mask must be used, because normal mask is used to trimming image
-                return True
+                potentially_on_edge = True
+    if not potentially_on_edge:
+        return False
+
+    # Check by finding centroid and distance to border
+    s_image = stretch_image(image, 1.5, 2.5)
+    s_centroid_point = get_image_centroid(s_image, float)
+    hist = get_histogram_of_weight_from_point(s_image, s_centroid_point)
+    peak = find_histogram_peak(hist, False)
+    dist_to_border = get_distance_to_mask(mask.getStretchedMask(), s_centroid_point)
+
+    # TODO rozległy histogram - duży przedmiot - musi być przy krawędzi
+
+    # Object close to border
+    if dist_to_border <= peak + 2.0 or dist_to_border < 3.0:
+        return True
+
+    # Check weight on close to border fields and compare to all weight
+    [border_weight, center_weight] = sum_image_values_on_mask(e_image, mask.e_2bordered_mask)
+    if border_weight >= center_weight:
+        return True
     return False
 
 
