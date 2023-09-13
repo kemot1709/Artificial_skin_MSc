@@ -9,7 +9,6 @@ from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_m
 from sensor.sensor import Sensor
 from sensor.params import ImageMask
 from item.item import Item, ItemPlacement, ItemType
-from item.en import itemPlacementTranslationDict, itemTranslationDict
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight
 from debug import *
@@ -48,6 +47,9 @@ statusTranslationDictionary = {
 
 
 class TableNode(QtCore.QThread):
+    language = "en"
+    item_language_translation = None
+
     subscribed_topics = []
     published_topics = []
     subscribers = []
@@ -64,9 +66,18 @@ class TableNode(QtCore.QThread):
     actual_item = None
     item_cnt = 1
 
-    def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None):
+    def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None, language="en"):
         super(TableNode, self).__init__()
         rospy.init_node(node_name)
+        self.language = language
+
+        # Place where you should import all translations
+        if self.language is "en":
+            from item import en as item_language_translation
+            self.item_language_translation = item_language_translation
+        else:
+            from item import en as item_language_translation
+            self.item_language_translation = item_language_translation
 
         if subscribed_topics is None:
             default_subscribed_topics = []
@@ -161,15 +172,15 @@ class TableNode(QtCore.QThread):
 
     def get_predicted_item(self):
         if self.actual_item.type is not ItemType.none:
-            return itemTranslationDict[self.actual_item.type]
+            return self.item_language_translation.itemTranslationDict[self.actual_item.type]
         else:
-            return itemTranslationDict[ItemType.unknown]
+            return self.item_language_translation.itemTranslationDict[ItemType.unknown]
 
     def get_predicted_location(self):
         if self.actual_item.placement is not ItemPlacement.unknown:
-            return itemPlacementTranslationDict[self.actual_item.placement]
+            return self.item_language_translation.itemPlacementTranslationDict[self.actual_item.placement]
         else:
-            return itemPlacementTranslationDict[ItemPlacement.unknown]
+            return self.item_language_translation.itemPlacementTranslationDict[ItemPlacement.unknown]
 
     def get_node_status(self):
         # TODO describe and use this statuses in code
