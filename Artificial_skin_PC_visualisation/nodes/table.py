@@ -9,6 +9,7 @@ from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_m
 from sensor.sensor import Sensor
 from sensor.params import ImageMask
 from item.item import Item, ItemPlacement, ItemType
+from item.en import itemPlacementTranslationDict, itemTranslationDict
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight
 from debug import *
@@ -159,24 +160,23 @@ class TableNode(QtCore.QThread):
             return True
 
     def get_predicted_item(self):
-        if self.is_item_placed():
-            pass
-            # TODO
+        if self.actual_item.type is not ItemType.none:
+            return itemTranslationDict[self.actual_item.type]
         else:
-            return "Nothing"
+            return itemTranslationDict[ItemType.unknown]
 
     def get_predicted_location(self):
         if self.actual_item.placement is not ItemPlacement.unknown:
-            # TODO
-            pass
+            return itemPlacementTranslationDict[self.actual_item.placement]
         else:
-            return "Nothing"
+            return itemPlacementTranslationDict[ItemPlacement.unknown]
 
     def get_node_status(self):
+        # TODO describe and use this statuses in code
         return statusTranslationDictionary[self.node_status]
 
     def get_predicted_weight(self):
-        if self.actual_item.weight > 0:
+        if self.actual_item.weight > 0.0:
             return self.actual_item.weight
         else:
             return 0
