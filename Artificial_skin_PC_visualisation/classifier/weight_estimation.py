@@ -1,5 +1,3 @@
-import numpy as np
-
 HYPERBOLE_A = 35108.0
 HYPERBOLE_X0 = 0.0
 HYPERBOLE_Y = 0.42

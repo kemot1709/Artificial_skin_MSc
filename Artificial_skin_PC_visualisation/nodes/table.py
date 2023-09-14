@@ -35,20 +35,9 @@ class NodeStatus(Enum):
     calibrating = 11
 
 
-statusTranslationDictionary = {
-        NodeStatus.unknown:                 "Unknown",
-        NodeStatus.not_connected:           "Initialized but not connected to controller",
-        NodeStatus.connected:               "Initialized, connected to controller but turned off",
-        NodeStatus.connection_crashed:      "Connection with controller is interrupted",
-        NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
-        NodeStatus.working:                 "Node working well",
-        NodeStatus.calibrating:             "Node calibrate itself",
-}
-
-
 class TableNode(QtCore.QThread):
     language = "en"
-    item_language_translation = None
+    translation = None
 
     subscribed_topics = []
     published_topics = []
@@ -73,11 +62,11 @@ class TableNode(QtCore.QThread):
 
         # Place where you should import all translations
         if self.language is "en":
-            from item import en as item_language_translation
-            self.item_language_translation = item_language_translation
+            from languages import en as translation
+            self.translation = translation
         else:
-            from item import en as item_language_translation
-            self.item_language_translation = item_language_translation
+            from languages import en as translation
+            self.translation = translation
 
         if subscribed_topics is None:
             default_subscribed_topics = []
@@ -172,19 +161,19 @@ class TableNode(QtCore.QThread):
 
     def get_predicted_item(self):
         if self.actual_item.type is not ItemType.none:
-            return self.item_language_translation.itemTranslationDict[self.actual_item.type]
+            return self.translation.itemTranslationDict[self.actual_item.type]
         else:
-            return self.item_language_translation.itemTranslationDict[ItemType.unknown]
+            return self.translation.itemTranslationDict[ItemType.none]
 
     def get_predicted_location(self):
         if self.actual_item.placement is not ItemPlacement.unknown:
-            return self.item_language_translation.itemPlacementTranslationDict[self.actual_item.placement]
+            return self.translation.itemPlacementTranslationDict[self.actual_item.placement]
         else:
-            return self.item_language_translation.itemPlacementTranslationDict[ItemPlacement.unknown]
+            return self.translation.itemPlacementTranslationDict[ItemPlacement.unknown]
 
     def get_node_status(self):
         # TODO describe and use this statuses in code
-        return statusTranslationDictionary[self.node_status]
+        return self.translation.nodeStatusTranslationDictionary[self.node_status]
 
     def get_predicted_weight(self):
         if self.actual_item.weight > 0.0:
