@@ -16,6 +16,7 @@ from debug import *
 
 
 # TODO make some defines for names of topics
+# TODO Node should be defined in another file and this file should inherit from node
 
 
 class Topic:

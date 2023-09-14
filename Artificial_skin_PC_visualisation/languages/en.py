@@ -1,8 +1,6 @@
 from item.item import ItemType, ItemPlacement
 from nodes.table import NodeStatus
 
-# TODO add remaining items to translation
-
 itemTranslationDict = {
         ItemType.book:        "Book",
         ItemType.food_tray:   "Food tray",

@@ -3,9 +3,8 @@ import numpy as np
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Header, Int32
 from sensor.data_parsing import parse_np_image_to_msg
+from debug.debug import *
 
-
-# TODO dictionary of possible values of strings
 
 def prepare_bool_msg(val):
     if type(val) is bool:
@@ -35,6 +34,6 @@ def prepare_image_msg(header_str, val):
             msg.header = Header()
             msg.header.frame_id = header_str
         except:
-            print("Unsuccessfull image parsing")
+            debug("Unsuccessfull image parsing", DBGLevel.ERROR)
             return None
         return msg
