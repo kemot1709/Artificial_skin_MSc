@@ -1,4 +1,4 @@
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 
 import pandas as pd
@@ -8,7 +8,7 @@ import numpy as np
 class Classifier:
     model = None
 
-    def __init__(self, num_classes):
+    def __init__(self, num_classes=2):
         # Define the model architecture
         self.model = Sequential()
         self.model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(16, 16, 1)))
@@ -30,8 +30,11 @@ class Classifier:
         predictions = self.model.predict(images)
         return predictions
 
-    def save(self, filename):
+    def export_model(self, filename):
         self.model.save(filename)
+
+    def import_model(self, filename):
+        self.model = load_model(filename)
 
     def evaluate(self, images, labels):
         loss, accuracy = self.model.evaluate(images, labels)

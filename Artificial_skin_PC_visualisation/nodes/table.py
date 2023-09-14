@@ -11,6 +11,7 @@ from sensor.params import ImageMask
 from item.item import Item, ItemPlacement, ItemType
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight
+from classifier.image_recognition import Classifier
 from debug import *
 
 
@@ -55,12 +56,16 @@ class TableNode(QtCore.QThread):
     actual_item = None
     item_cnt = 1
 
-    def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None, language="en"):
+    item_classifier = None
+    classifier_model_path = None
+
+    def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None, language="en",
+                 model_path="image_model.h5"):
         super(TableNode, self).__init__()
         rospy.init_node(node_name)
-        self.language = language
 
         # Place where you should import all translations
+        self.language = language
         if self.language is "en":
             from languages import en as translation
             self.translation = translation
@@ -68,6 +73,13 @@ class TableNode(QtCore.QThread):
             from languages import en as translation
             self.translation = translation
 
+        # Item classifier model initialization section
+        self.classifier_model_path = model_path
+        self.item_classifier = Classifier()
+        self.item_classifier.import_model(self.classifier_model_path)
+
+        # Setup subscribed topics
+        # Not tested on outside given topics but should work
         if subscribed_topics is None:
             default_subscribed_topics = []
             ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
@@ -79,6 +91,8 @@ class TableNode(QtCore.QThread):
         else:
             self.subscribed_topics = subscribed_topics
 
+        # Setup published topics
+        # Not tested on outside given topics but should work
         if published_topics is None:
             default_published_topics = []
             ret = Topic("/raw_image", Image)
@@ -98,6 +112,7 @@ class TableNode(QtCore.QThread):
         else:
             self.published_topics = published_topics
 
+        # Initialize all topics
         for topic in self.subscribed_topics:
             sub = self.Subscriber(topic)
             self.subscribers.append(sub)
@@ -194,8 +209,10 @@ class TableNode(QtCore.QThread):
             self.actual_item.placement = recognise_position(self.actual_item.getExtractedImage(), self.mask.getMask(),
                                                             [1.5, 2.5])
             self.actual_item.weight = estimate_weight(self.actual_item.getExtractedImage())
-            # TODO item recognition
-            pass
+            if self.item_classifier is not None:
+                self.actual_item.type = self.item_classifier.predict(self.actual_item.getExtractedImage())
+            else:
+                self.actual_item.type = ItemType.unknown
 
     def run(self):
         while not self.exitFlag:
