@@ -61,7 +61,7 @@ class TableNode(QtCore.QThread):
     classifier_model_path = None
 
     def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None, language="en",
-                 model_path="image_model.h5"):
+                 model_path="classifier/models/test_model.keras"):
         super(TableNode, self).__init__()
         rospy.init_node(node_name)
 

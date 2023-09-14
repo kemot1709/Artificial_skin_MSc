@@ -4,7 +4,7 @@ import keras
 import cv2
 
 from item.item import Item, ItemType
-from item.en import itemTranslationDict
+from languages import en as translation
 
 
 class LabelsMap:
@@ -45,7 +45,7 @@ class LabelsMap:
         labelNames = []
         for label in labels:
             for jebanyPython in label:
-                elo = itemTranslationDict[ItemType(jebanyPython)]
+                elo = translation.itemTranslationDict[ItemType(jebanyPython)]
                 labelNames.append(elo)
         return labelNames
 
