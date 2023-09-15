@@ -209,9 +209,13 @@ class TableNode(QtCore.QThread):
         if self.is_item_placed():
             self.actual_item.placement = recognise_position(self.actual_item.getExtractedImage(), self.mask.getMask(),
                                                             [1.5, 2.5])
+
             self.actual_item.weight = estimate_weight(self.actual_item.getExtractedImage())
+
             if self.item_classifier is not None:
-                self.actual_item.type = self.item_classifier.predict(self.actual_item.getExtractedImage())
+                prediction = self.item_classifier.predict_items_with_confidence(self.actual_item.getExtractedImage(),
+                                                                                0.8)
+                self.actual_item.type = prediction[0]
             else:
                 self.actual_item.type = ItemType.unknown
 
@@ -257,5 +261,5 @@ class TableNode(QtCore.QThread):
             if type(message) is self.topic.msg_type:
                 self.pub.publish(message)
             else:
-                print("Invalid publish message type, expected: " + str(self.topic.msg_type) +
-                      ", received: " + str(message) + ".")
+                debug("Invalid publish message type, expected: " + str(self.topic.msg_type) +
+                      ", received: " + str(message) + ".", DBGLevel.WARN)

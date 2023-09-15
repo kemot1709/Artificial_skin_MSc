@@ -75,6 +75,10 @@ class ImageParser:
     def parseOrdinalNumbersToNames(self, list):
         return self.map.mapOrdinalNumbersToLabelNames(list)
 
+    def parseOrdinalNumbersToItemTypes(self, list):
+        df = self.map.mapOrdinalNumbersToLabels(list)
+        return df.values.tolist()[0]
+
 
 def splitDataToTraining(data, training_size, valuation_size, test_size=0.0):
     # Normalize inputs

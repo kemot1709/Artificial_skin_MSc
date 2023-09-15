@@ -23,10 +23,10 @@ y_val = parser.parseLabelsToArray(validationSet)
 x_test = parser.parseImagesToArray(testSet)
 y_test = parser.parseLabelsToArray(testSet)
 
-classifier = Classifier(y_train.shape[1])
+classifier = Classifier(y_train.shape[1], parser.parseOrdinalNumbersToItemTypes(list(range(0, y_train.shape[1]))))
 ###############
-# classifier.import_model("classifier/models/test_model.keras")
-classifier.trainModel(x_train, y_train, x_val, y_val)
+classifier.import_model("classifier/models/test_model.keras")
+# classifier.trainModel(x_train, y_train, x_val, y_val)
 ###############
 table = classifier.evaluationTable(x_test, y_test)
 
