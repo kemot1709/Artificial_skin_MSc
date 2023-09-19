@@ -243,5 +243,6 @@ class TableNode(QtCore.QThread):
             if type(message) is self.topic.msg_type:
                 self.pub.publish(message)
             else:
-                debug("Invalid publish message type, expected: " + str(self.topic.msg_type) +
-                      ", received: " + str(message) + ".", DBGLevel.WARN)
+                debug(DBGLevel.WARN,
+                      "Invalid publish message type, expected: " + str(self.topic.msg_type) + ", received: " + str(
+                          message) + ".")

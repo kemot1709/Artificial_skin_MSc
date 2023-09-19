@@ -34,6 +34,6 @@ def prepare_image_msg(header_str, val):
             msg.header = Header()
             msg.header.frame_id = header_str
         except:
-            debug("Unsuccessfull image parsing", DBGLevel.ERROR)
+            debug(DBGLevel.ERROR, "Unsuccessfull image parsing")
             return None
         return msg
