@@ -2,7 +2,7 @@ from connection.connection import Serial
 
 from sensor.data_parsing import parse_data_to_np_image, parse_np_image_to_msg, cast_data_to_uint8, \
     process_raw_image_through_calibration
-from debug import *
+from debug.debug import *
 
 
 class Sensor:

@@ -7,7 +7,7 @@ import serial.tools.list_ports as list_ports
 
 from PyQt5 import QtCore
 
-from debug import *
+from debug.debug import *
 
 
 class Serial(QtCore.QThread):

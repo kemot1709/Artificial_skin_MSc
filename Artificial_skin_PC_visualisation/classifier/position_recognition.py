@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from item.item import ItemPlacement, ItemShape, ItemType
 from sensor.params import ImageMask
-from debug import debug, DBGLevel
+from debug.debug import debug, DBGLevel
 from classifier.image_utils import stretch_image
 
 

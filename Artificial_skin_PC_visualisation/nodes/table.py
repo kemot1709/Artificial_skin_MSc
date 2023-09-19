@@ -6,36 +6,18 @@ from PyQt5 import QtCore
 from enum import Enum
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
+from nodes.template import NodeStatus, Topic
 from sensor.sensor import Sensor
 from sensor.params import ImageMask
 from item.item import Item, ItemPlacement, ItemType
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight
 from classifier.image_recognition import Classifier
-from debug import *
+from debug.debug import *
 
 
 # TODO make some defines for names of topics
 # TODO Node should be defined in another file and this file should inherit from node
-
-
-class Topic:
-    def __init__(self, name, msg_type, callback=None, queue_size=10):
-        self.name = name
-        self.msg_type = msg_type
-        self.callback = callback
-        self.queue_size = queue_size
-
-
-class NodeStatus(Enum):
-    unknown = 0
-    not_connected = 1
-    connected = 2
-    connection_crashed = 3
-    connection_bad_messages = 4
-    working = 10
-    calibrating = 11
-
 
 class TableNode(QtCore.QThread):
     language = "en"
@@ -67,7 +49,7 @@ class TableNode(QtCore.QThread):
 
         # Place where you should import all translations
         self.language = language
-        if self.language is "en":
+        if self.language == "en":
             from languages import en as translation
             self.translation = translation
         else:
