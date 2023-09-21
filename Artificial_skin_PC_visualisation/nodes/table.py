@@ -9,6 +9,7 @@ from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_m
 from nodes.template import NodeStatus, Topic
 from sensor.sensor import Sensor
 from sensor.params import ImageMask
+from sensor.data_parsing import flatten
 from item.item import Item, ItemPlacement, ItemType
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight
@@ -152,14 +153,15 @@ class TableNode(QtCore.QThread):
         self.new_image_flag = True
 
     def is_item_placed(self):
-        if all(i <= 10 for i in self.actual_item.getExtractedImage()):
-            return False
+        for i in flatten(self.actual_item.getExtractedImage()):
+            if i > 10:
+                return True
         else:
-            return True
+            return False
 
     def get_predicted_item(self):
         if self.actual_item.type is not ItemType.none:
-            return self.translation.itemTranslationDict[self.actual_item.type]
+            return self.translation.itemTranslationDict[self.actual_item.type[0]]
         else:
             return self.translation.itemTranslationDict[ItemType.none]
 

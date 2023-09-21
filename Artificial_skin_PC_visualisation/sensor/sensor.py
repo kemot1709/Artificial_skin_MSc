@@ -31,12 +31,14 @@ class Sensor:
         self.parent_node = node
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
-        debug(DBGLevel.INFO, "New data received from controller")
         self.image_actual = parse_data_to_np_image(n_rows, n_columns, new_pressure_map)
 
-        if self.image_calibrated is not None:
-            self.image_actual_calibrated = process_raw_image_through_calibration(n_rows, n_columns, self.image_actual,
-                                                                                 self.image_calibrated)
+        if self.image_calibrated is None:
+            self.image_calibrated = self.image_actual
+            return
+        self.image_actual_calibrated = process_raw_image_through_calibration(n_rows, n_columns, self.image_actual,
+                                                                             self.image_calibrated)
+        debug(DBGLevel.INFO, "New data received from controller")
 
         if self.parent_node is not None:
             self.parent_node.new_image_from_sensor()

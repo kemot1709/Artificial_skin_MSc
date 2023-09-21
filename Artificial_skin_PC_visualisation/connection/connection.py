@@ -11,6 +11,7 @@ from debug.debug import *
 
 
 class Serial(QtCore.QThread):
+    # TODO this rows and columns can't be defined here but must be taken from sensor
     rows = 16
     columns = 16
     pressure_map = None
@@ -84,18 +85,31 @@ class Serial(QtCore.QThread):
                     # Read values from serial and make sure it's not garbage
                     try:
                         input_msg = self.ser.readline().decode('utf-8')
+                        input_msg = input_msg.lstrip('\0')
                     except:
                         input_msg = str()
+                        debug(DBGLevel.ERROR, "Bad read of serial: \"" + input_msg + "\"")
                         continue
 
                     if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
                         lines = input_msg.strip().split('|')
+
+                        if len(lines) < self.rows:  # TODO check this condition if we can get more rows
+                            debug(DBGLevel.ERROR, "Bad sensor read - bad number of rows")
+                            continue
+                        flag_xd = False
 
                         i = 0
                         for line in lines:
                             if i >= self.rows:
                                 break
                             list_of_values = line.strip().split(',')
+
+                            if len(list_of_values) < self.columns:  # TODO check this condition if we can get more cols
+                                debug(DBGLevel.ERROR, "Bad sensor read - bad number of columns")
+                                flag_xd = True
+                                break
+                                # TODO beautify this code
 
                             j = 0
                             for value in list_of_values:
@@ -105,11 +119,15 @@ class Serial(QtCore.QThread):
                                 try:
                                     self.pressure_map[j][i] = float(value)
                                 except:
-                                    debug(DBGLevel.CRITICAL, "Kurwaaaaaaaaaaaaa" + i + j + int(value))
+                                    debug(DBGLevel.CRITICAL, "Kurwaaaaaaaaaaaaa" + str(i) + str(j) + str(value))
                                     pass
                                 j = j + 1
                             i = i + 1
                             # TODO multithreating on python 2
+
+                        if flag_xd:
+                            continue
+
                         # self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
                         self.send_data_explicitely()
             except Exception as e:

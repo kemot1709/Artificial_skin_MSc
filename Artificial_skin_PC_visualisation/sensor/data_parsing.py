@@ -2,6 +2,18 @@ import numpy as np
 from cv_bridge import CvBridge
 
 
+def flatten(seq):
+    out_list = []
+    for element in seq:
+        element_type = type(element)
+        if element_type is tuple or element_type is list or element_type is np.ndarray:
+            for element_in_element in flatten(element):
+                out_list.append(element_in_element)
+        else:
+            out_list.append(element)
+    return out_list
+
+
 def cast_data_to_uint8(rows, columns, raw_data):
     data_uint8 = [[0 for x in range(columns)] for y in range(rows)]
 
@@ -19,8 +31,10 @@ def cast_data_to_uint8(rows, columns, raw_data):
 
 
 def parse_data_to_np_image(rows, columns, raw_data):
-    if not all(i <= 255 for i in raw_data):
-        raw_data = cast_data_to_uint8(rows, columns, raw_data)
+    for i in flatten(raw_data):
+        if not i <= 255:
+            raw_data = cast_data_to_uint8(rows, columns, raw_data)
+            break
     np_image = np.array(raw_data, dtype=np.uint8)
     return np_image
 
