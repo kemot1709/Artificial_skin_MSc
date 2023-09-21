@@ -1,7 +1,8 @@
 from connection.connection import Serial
+import copy
 
 from sensor.data_parsing import parse_data_to_np_image, parse_np_image_to_msg, cast_data_to_uint8, \
-    process_raw_image_through_calibration
+    compensate_raw_image
 from debug.debug import *
 
 
@@ -13,8 +14,11 @@ class Sensor:
     parent_node = None
 
     image_calibrated = None
+    image_calibrated_raw = None
     image_actual = None
+    image_actual_raw = None
     image_actual_calibrated = None
+    image_actual_calibrated_raw = None
 
     def __init__(self, usb_port="/dev/ttyUSB0"):
         self.usb_port = usb_port
@@ -31,13 +35,17 @@ class Sensor:
         self.parent_node = node
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
+        # TODO sometimes incoming data are corrupted (values like 4 or 4000000). It has to be filtered out
+        self.image_actual_raw = new_pressure_map
         self.image_actual = parse_data_to_np_image(n_rows, n_columns, new_pressure_map)
 
         if self.image_calibrated is None:
-            self.image_calibrated = self.image_actual
+            self.image_calibrated = self.image_actual.copy()
+            self.image_calibrated_raw = copy.deepcopy(self.image_actual_raw)
             return
-        self.image_actual_calibrated = process_raw_image_through_calibration(n_rows, n_columns, self.image_actual,
-                                                                             self.image_calibrated)
+        self.image_actual_calibrated_raw = compensate_raw_image(n_rows, n_columns, self.image_actual_raw,
+                                                                self.image_calibrated_raw)
+        self.image_actual_calibrated = parse_data_to_np_image(n_rows, n_columns, self.image_actual_calibrated_raw)
         debug(DBGLevel.INFO, "New data received from controller")
 
         if self.parent_node is not None:

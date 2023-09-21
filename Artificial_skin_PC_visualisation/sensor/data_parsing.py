@@ -50,14 +50,14 @@ def mask_np_image(np_image, mask):
     pass
 
 
-def process_raw_image_through_calibration(rows, columns, image, calibration_image):
+def compensate_raw_image(rows, columns, image_to_compensate, calibration_image):
     # TODO implement all possible compensation methods
     mult_b = 0.98
     calibrated_image = [[0 for x in range(columns)] for y in range(rows)]
 
     for i in range(columns):
         for j in range(rows):
-            calibrated_image[i][j] = image[i][j]
+            calibrated_image[i][j] = image_to_compensate[i][j]
             if calibrated_image[i][j] > mult_b * calibration_image[i][j]:
                 calibrated_image[i][j] = mult_b * calibration_image[i][j]
             calibrated_image[i][j] = calibrated_image[i][j] * 4095 / (mult_b * calibration_image[i][j])
