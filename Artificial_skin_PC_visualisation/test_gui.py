@@ -1,12 +1,15 @@
 import sys
+
+sys.path.insert(0, '/usr/local/lib/python3.8/site-packages')
+print(sys.path)
+
 from sys import platform
 import time
 from datetime import datetime, timedelta
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import serial
-import serial.tools.list_ports as list_ports
+from connection.connection import Serial
 
 import numpy as np
 from PIL import Image as im
@@ -16,9 +19,10 @@ HYP_X0 = 0.0
 HYP_Y = 0.42
 RES = 470
 FILE_OUT_WEIGHT = "weight_test"
+WEIGHT_MULTIPLIER = 2.5740
 
 IMAGE_COUNTER = 1
-IMAGE_FOLDER = "c_img"
+IMAGE_FOLDER = "c_img_v2"
 IMAGE_FILENAME = "dupa"
 IMAGE_ADD_TIMESTAMP = False
 IMAGE_ADD_CALIBRATION_MAP = True
@@ -51,9 +55,11 @@ class Ui_MainWindow(object):
     map = None
     map_calibrated = None
     map_255_self = None
+    map_255_calibrated_self = None
     last_timestamp = datetime.now()
     values = [0 for x in range(10)]
     image_cnt = IMAGE_COUNTER
+    estimated_weight = 0
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -189,6 +195,8 @@ class Ui_MainWindow(object):
         self.map_method_8 = [[0 for x in range(self.columns)] for y in range(self.rows)]
         self.map_method_9 = [[0 for x in range(self.columns)] for y in range(self.rows)]
 
+        self.map_255_calibrated_self = [[0 for x in range(self.columns)] for y in range(self.rows)]
+
         # self.statusbar = QtWidgets.QStatusBar(MainWindow)
         # self.statusbar.setObjectName("statusbar")
         # MainWindow.setStatusBar(self.statusbar)
@@ -213,6 +221,17 @@ class Ui_MainWindow(object):
 
     def recalibrateMap(self, new_map):
         self.map_calibrated = new_map
+
+        for i in range(self.columns):
+            for j in range(self.rows):
+                val_cal = int(255 - self.map_calibrated[i][j] * 255 / 4095)
+
+                if val_cal > 255:
+                    val_cal = 255
+                if val_cal < 0:
+                    val_cal = 0
+
+                self.map_255_calibrated_self[i][j] = val_cal
 
     def repaintMap(self):
         height = self.graphics_view.size().height()
@@ -312,6 +331,7 @@ class Ui_MainWindow(object):
         self.weight_9_value.setText(self.values[8])
 
         self.map_255_self = map_255
+        self.estimated_weight = float(self.values[7]) * WEIGHT_MULTIPLIER
 
     def buttonImgSaveToFileHandler(self):
         # TODO create dir if do not exist
@@ -327,19 +347,19 @@ class Ui_MainWindow(object):
 
         if IMAGE_ADD_CALIBRATION_MAP:
             c_name = 'c_' + name
-            c_image = im.fromarray(np.array(self.map_calibrated, dtype=np.uint8), mode='L')
+            c_image = im.fromarray(np.array(self.map_255_calibrated_self, dtype=np.uint8), mode='L')
             c_image.save(IMAGE_FOLDER + '/' + c_name)
 
+        print('image saved\t' + str(self.image_cnt))
         self.image_cnt = self.image_cnt + 1
-        print('image saved')
 
     def buttonSaveToFileHandler(self):
         with open(FILE_OUT_WEIGHT, "a") as file:
             file.write(
-                    "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                            self.values[0], self.values[1], self.values[2], self.values[3],
-                            self.values[4], self.values[5], self.values[6], self.values[7],
-                            self.values[8]))
+                "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
+                    self.values[0], self.values[1], self.values[2], self.values[3],
+                    self.values[4], self.values[5], self.values[6], self.values[7],
+                    self.values[8]))
 
     def buttonCalibrateHandler(self):
         self.recalibrateMap(self.map)
@@ -347,94 +367,13 @@ class Ui_MainWindow(object):
 
 ui = Ui_MainWindow()
 
-
-class Serial(QtCore.QThread):
-    rows = 16
-    columns = 16
-    pressure_map = None
-    ser = None
-
-    pressureMapUpdated = QtCore.pyqtSignal(int, int, list)
-
-    def __init__(self):
-        super().__init__()
-        self.pressure_map = [[0 for x in range(self.columns)] for y in range(self.rows)]
-        self.connect_to_board()
-
-        self.exitFlag = False
-
-    def connect_to_board(self):
-        list_of_ports = list_ports.comports()
-        for port in list_of_ports:
-            print(port)
-
-        try:
-            if platform == "linux" or platform == "linux2":
-                # os.chmod('/dev/ttyUSB0', 0o666)
-                self.ser = serial.Serial('/dev/ttyUSB0')
-            elif platform == "darwin":
-                print("Change your computer")
-                return 0
-            elif platform == "win32":
-                self.ser = serial.Serial('COM3')
-            else:
-                print("Unknown operating system")
-                return 0
-
-            self.ser.baudrate = 115200
-            self.ser.timeout = 0.050
-            self.ser.parity = serial.PARITY_NONE
-            self.ser.stopbits = serial.STOPBITS_ONE
-            self.ser.bytesize = serial.EIGHTBITS
-
-            print("connected to: " + self.ser.portstr)
-            self.pressureMapUpdated.connect(ui.updateMap)
-            super().start()
-
-        # Wywaliło komunikację
-        except serial.serialutil.SerialException:
-            return 0
-
-    def run(self):
-        self.ser.flush()
-        try:
-            while not self.exitFlag:
-                # Read values from serial and make sure it's not garbage
-                try:
-                    input_msg = self.ser.readline().decode('utf-8')
-                except:
-                    input_msg = str()
-
-                if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
-                    lines = input_msg.strip().split('|')
-
-                    i = 0
-                    for line in lines:
-                        if i >= self.rows:
-                            continue
-                        list_of_values = line.strip().split(',')
-
-                        j = 0
-                        for value in list_of_values:
-                            if j >= self.columns:
-                                break
-
-                            try:
-                                self.pressure_map[j][i] = float(value)
-                            except:
-                                print("Kurwaaaaaaaaaaaaa", i, j, int(value))
-                                pass
-                            j = j + 1
-                        i = i + 1
-                    self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
-        except Exception as e:
-            print(e)
-
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     ser = Serial()
+    ser.set_ui(ui)
+    ser.connect_to_controller("COM3")
+    # TODO This if have to be changed
     if not ser:
         print("Board not detected or busy")
         sys.exit()

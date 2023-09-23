@@ -6,3 +6,13 @@
 # Saved images
 /img*
 /c_img*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Temporary and test files
+temp*.py
+
+# Compiled classifier
+*.h5

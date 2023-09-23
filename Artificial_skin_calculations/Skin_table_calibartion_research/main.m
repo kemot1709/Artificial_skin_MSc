@@ -19,3 +19,6 @@ plot_data(data, M_NAMES, 'all', 0);
 plot_data(data, M_NAMES, 'd28', 0);
 plot_data(data, M_NAMES, 'd50', 0);
 plot_data(data, M_NAMES, 'd150', 0);
+
+% Approximate selected method with line
+a = approximation_weight(data, M_SCALE_TO_CALIB_A);
