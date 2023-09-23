@@ -5,10 +5,10 @@ DIVIDER_RESISTANCE = 470
 WEIGHT_MULTIPLIER = 2.5740
 
 
-def estimate_weight(image, max_value=4095):
+def estimate_weight(raw_calibrated_image, max_value=4095):
     weight = 0
 
-    for row in image:
+    for row in raw_calibrated_image:
         for tile in row:
             # Have to be rounded because otherwise have calculation errors with small weight
             normalized_pressure = round(tile * (4095 / max_value), 1)

@@ -58,9 +58,9 @@ class TableNode(QtCore.QThread):
             self.translation = translation
 
         # Item classifier model initialization section
-        self.classifier_model_path = model_path
-        self.item_classifier = Classifier()
-        self.item_classifier.import_model(self.classifier_model_path)
+        # self.classifier_model_path = model_path
+        # self.item_classifier = Classifier()
+        # self.item_classifier.import_model(self.classifier_model_path)
 
         # Setup subscribed topics
         # Not tested on outside given topics but should work
@@ -177,7 +177,7 @@ class TableNode(QtCore.QThread):
 
     def get_predicted_weight(self):
         if self.actual_item.weight > 0.0:
-            return self.actual_item.weight
+            return int(round(self.actual_item.weight))
         else:
             return 0
 
@@ -185,6 +185,7 @@ class TableNode(QtCore.QThread):
         # Calibration image is not nessecarry, because sensor calibrated this data on its own
         self.actual_item = Item(self.mask.getMask())
         self.actual_item.image = self.sensor.image_actual_calibrated
+        self.actual_item.image_extracted_raw = self.sensor.image_actual_calibrated_raw
         self.actual_item.setExtractedImage()
         self.actual_item.id = self.item_cnt
         self.item_cnt += 1
@@ -194,7 +195,7 @@ class TableNode(QtCore.QThread):
             self.actual_item.placement = recognise_position(self.actual_item.getExtractedImage(), self.mask.getMask(),
                                                             [1.5, 2.5])
 
-            self.actual_item.weight = estimate_weight(self.actual_item.getExtractedImage())
+            self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
 
             if self.item_classifier is not None:
                 prediction = self.item_classifier.predict_items_with_confidence(self.actual_item.getExtractedImage(),

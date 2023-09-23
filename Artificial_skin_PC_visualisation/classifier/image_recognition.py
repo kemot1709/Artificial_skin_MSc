@@ -56,7 +56,7 @@ class Classifier:
 
     def export_model(self, filename):
         filename = os.path.splitext(filename)[0]
-        print(self.model.summary())
+        # self.model.summary()
         self.model.save(filename + ".keras")
         with open(str(filename + ".names"), 'wb') as pickle_file:
             pickle.dump(self.output_types, pickle_file)
@@ -65,7 +65,7 @@ class Classifier:
     def import_model(self, filename):
         filename = os.path.splitext(filename)[0]
         self.model = load_model(filename + ".keras")
-        print(self.model.summary())
+        # self.model.summary()
         with open(str(filename + ".names"), 'rb') as pickle_file:
             self.output_types = pickle.load(pickle_file)
         debug(DBGLevel.WARN, "Model successfully imported")

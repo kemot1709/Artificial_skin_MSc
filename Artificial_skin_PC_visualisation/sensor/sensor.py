@@ -3,6 +3,7 @@ import copy
 
 from sensor.data_parsing import parse_data_to_np_image, parse_np_image_to_msg, cast_data_to_uint8, \
     compensate_raw_image
+from sensor.params import Params
 from debug.debug import *
 
 
@@ -10,6 +11,8 @@ class Sensor:
     ser = None
     usb_port = ""
     usb_connected = False
+
+    field_params = None
 
     parent_node = None
 
@@ -20,8 +23,9 @@ class Sensor:
     image_actual_calibrated = None
     image_actual_calibrated_raw = None
 
-    def __init__(self, usb_port="/dev/ttyUSB0"):
+    def __init__(self, usb_port="/dev/ttyUSB0", field_params=Params):
         self.usb_port = usb_port
+        self.field_params = field_params
         self.ser = Serial()
         self.ser.set_data_receiver(self.new_data_received)
 

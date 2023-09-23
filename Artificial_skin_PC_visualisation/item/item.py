@@ -128,6 +128,7 @@ class Item:
         self.image_calibration = None
         self.image_mask = mask
         self.image_extracted = None
+        self.image_extracted_raw = None
         self.potentially_corrupted = False
 
     def getLabelsFromFilename(self, path: str, filename: str, image_id: int):
