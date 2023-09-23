@@ -1,5 +1,9 @@
 import time
+import os
 from sys import platform
+
+# Suppress tensorflow noncritical warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from nodes.table import TableNode
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg

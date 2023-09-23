@@ -35,7 +35,7 @@ class Sensor:
         self.parent_node = node
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
-        # TODO sometimes incoming data are corrupted (values like 4 or 4000000). It has to be filtered out
+        # TODO sometimes incoming data are corrupted (values like 4). It has to be filtered out
         self.image_actual_raw = new_pressure_map
         self.image_actual = parse_data_to_np_image(n_rows, n_columns, new_pressure_map)
 

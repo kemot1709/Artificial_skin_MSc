@@ -14,6 +14,7 @@ class Serial(QtCore.QThread):
     # TODO this rows and columns can't be defined here but must be taken from sensor
     rows = 16
     columns = 16
+    max_possible_value = 4095
     pressure_map = None
     ser = None
     ui = None
@@ -91,45 +92,44 @@ class Serial(QtCore.QThread):
                         debug(DBGLevel.ERROR, "Bad read of serial: \"" + input_msg + "\"")
                         continue
 
+                    corrupted_input_msg = False
                     if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
                         lines = input_msg.strip().split('|')
+                        lines.remove('')  # Last line is always empty
 
-                        if len(lines) < self.rows:  # TODO check this condition if we can get more rows
-                            debug(DBGLevel.ERROR, "Bad sensor read - bad number of rows")
+                        if len(lines) is not self.rows:
+                            debug(DBGLevel.ERROR, "Bad sensor read - bad number of rows: " + str(len(lines)))
+                            corrupted_input_msg = True
                             continue
-                        flag_xd = False
 
                         i = 0
                         for line in lines:
-                            if i >= self.rows:
-                                break
                             list_of_values = line.strip().split(',')
 
-                            if len(list_of_values) < self.columns:  # TODO check this condition if we can get more cols
-                                debug(DBGLevel.ERROR, "Bad sensor read - bad number of columns")
-                                flag_xd = True
+                            if len(list_of_values) is not self.columns:
+                                debug(DBGLevel.ERROR,
+                                      "Bad sensor read - bad number of columns: " + str(len(list_of_values)))
+                                corrupted_input_msg = True
                                 break
-                                # TODO beautify this code
 
                             j = 0
                             for value in list_of_values:
-                                if j >= self.columns:
-                                    break
-
                                 try:
-                                    self.pressure_map[j][i] = float(value)
+                                    field_pressure = float(value)
+                                    if field_pressure > self.max_possible_value:
+                                        raise Exception("Read value is too high")
+                                    self.pressure_map[j][i] = field_pressure
                                 except:
-                                    debug(DBGLevel.CRITICAL, "Kurwaaaaaaaaaaaaa" + str(i) + str(j) + str(value))
-                                    pass
+                                    corrupted_input_msg = True
+                                    debug(DBGLevel.ERROR,
+                                          "Kurwaaaaaaaaaaaaa\n" + str(i) + "\n" + str(j) + "\n" + str(value))
                                 j = j + 1
                             i = i + 1
-                            # TODO multithreating on python 2
+                            # TODO multithreating on python
 
-                        if flag_xd:
-                            continue
-
-                        # self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
-                        self.send_data_explicitely()
+                        if not corrupted_input_msg:
+                            # self.pressureMapUpdated.emit(self.rows, self.columns, self.pressure_map)
+                            self.send_data_explicitely()
             except Exception as e:
                 print(e)
                 exc_type, exc_obj, exc_tb = sys.exc_info()
