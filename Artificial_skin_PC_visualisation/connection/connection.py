@@ -76,6 +76,7 @@ class Serial(QtCore.QThread):
 
         # Communication crashed
         except serial.serialutil.SerialException:
+            debug(DBGLevel.CRITICAL, "Connection with: " + port + " crashed")
             return 0
 
     def run(self):
