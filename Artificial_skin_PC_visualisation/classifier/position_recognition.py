@@ -111,6 +111,7 @@ def sum_image_values_on_mask(image, mask_image):
     return [sum_zeros, sum_ones]
 
 
+# TODO global counter where this function makes return
 # TODO works fucking badly but at least it is sth
 def check_item_on_edge(image, mask):
     image = np.uint8(image)
@@ -189,7 +190,7 @@ def find_sides_of_table(mask_image):
     last_col = mask_image[:, -1]
     side_edges = np.argwhere(np.diff(np.r_[0, last_col, 0])).reshape(-1, 2)
     if len(side_edges) > 1:
-        debug(DBGLevel.WARN, "Table have some border inconsistance")
+        debug(DBGLevel.WARN, "Table have some border inconsistency")
 
     edge = side_edges[0]
     edge[1] -= 1
@@ -197,23 +198,26 @@ def find_sides_of_table(mask_image):
 
 
 def recognise_position(image, image_mask, field_size):
-    s_image = stretch_image(image, field_size[0], field_size[1])  # field size = [1.5, 2.5]
-    # TODO clean this section
-    # s_image_mask = stretch_image(image_mask, field_size[0], field_size[1])
     mask = ImageMask()
+
+    # Prepare useful data and prepare images
+    s_image = stretch_image(image, field_size[0], field_size[1])  # field size = [1.5, 2.5]
+    # s_image_mask = stretch_image(image_mask, field_size[0], field_size[1])
     s_image_mask = mask.getStretchedMask()
-    ##############################
     s_side_edges = find_sides_of_table(s_image_mask)
 
+    # Position recognition
     is_border = check_item_on_edge(image, mask)
     s_centroid_point = get_image_centroid(s_image, int)
     hist = get_histogram_of_weight_from_point(s_image, s_centroid_point)
     peak = find_histogram_peak(hist)
 
+    # Return result
     if not is_border:
         if s_centroid_point[1] < s_side_edges[0] or s_centroid_point[1] > s_side_edges[1]:
             return ItemPlacement.side
         else:
             return ItemPlacement.center
 
-    return ItemPlacement.unknown
+    return ItemPlacement.edge
+    # return ItemPlacement.unknown

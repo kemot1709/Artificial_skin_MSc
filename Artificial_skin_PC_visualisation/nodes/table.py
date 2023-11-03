@@ -1,4 +1,5 @@
 import rospy
+import time
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
@@ -6,7 +7,7 @@ from PyQt5 import QtCore
 from enum import Enum
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
-from nodes.template import NodeStatus, Topic
+from nodes.node_core import NodeStatus, Topic, Node
 from sensor.sensor import Sensor
 from sensor.params import ImageMask
 from sensor.data_parsing import flatten
@@ -17,18 +18,7 @@ from classifier.image_recognition import Classifier
 from debug.debug import *
 
 
-# TODO make some defines for names of topics
-# TODO Node should be defined in another file and this file should inherit from node
-
-class TableNode(QtCore.QThread):
-    language = "en"
-    translation = None
-
-    subscribed_topics = []
-    published_topics = []
-    subscribers = []
-    publishers = []
-
+class TableNode(Node):
     sensor = None
 
     on_flag = False
@@ -43,69 +33,37 @@ class TableNode(QtCore.QThread):
     item_classifier = None
     classifier_model_path = None
 
-    def __init__(self, node_name="IntelligentTable", subscribed_topics=None, published_topics=None, language="en",
-                 model_path="classifier/models/test_model.keras"):
-        super(TableNode, self).__init__()
-        rospy.init_node(node_name)
-
-        # Place where you should import all translations
-        self.language = language
-        if self.language == "en":
-            from languages import en as translation
-            self.translation = translation
-        else:
-            from languages import en as translation
-            self.translation = translation
-
-        # Item classifier model initialization section
-        # self.classifier_model_path = model_path
-        # self.item_classifier = Classifier()
-        # self.item_classifier.import_model(self.classifier_model_path)
-
+    def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras"):
         # Setup subscribed topics
-        # Not tested on outside given topics but should work
-        if subscribed_topics is None:
-            default_subscribed_topics = []
-            ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
-            default_subscribed_topics.append(ret)
-            ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
-            default_subscribed_topics.append(ret)
-
-            self.subscribed_topics = default_subscribed_topics
-        else:
-            self.subscribed_topics = subscribed_topics
+        subscribed_topics = []
+        ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
+        subscribed_topics.append(ret)
+        ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
+        subscribed_topics.append(ret)
 
         # Setup published topics
-        # Not tested on outside given topics but should work
-        if published_topics is None:
-            default_published_topics = []
-            ret = Topic("/raw_image", Image)
-            default_published_topics.append(ret)
-            ret = Topic("/status", String)
-            default_published_topics.append(ret)
-            ret = Topic("/is_placed", Bool)
-            default_published_topics.append(ret)
-            ret = Topic("/weight", Int32)
-            default_published_topics.append(ret)
-            ret = Topic("/predicted_item", String)
-            default_published_topics.append(ret)
-            ret = Topic("/location", String)
-            default_published_topics.append(ret)
+        published_topics = []
+        ret = Topic("/raw_image", Image)
+        published_topics.append(ret)
+        ret = Topic("/status", String)
+        published_topics.append(ret)
+        ret = Topic("/is_placed", Bool)
+        published_topics.append(ret)
+        ret = Topic("/weight", Int32)
+        published_topics.append(ret)
+        ret = Topic("/predicted_item", String)
+        published_topics.append(ret)
+        ret = Topic("/location", String)
+        published_topics.append(ret)
 
-            self.published_topics = default_published_topics
-        else:
-            self.published_topics = published_topics
+        # Item classifier model initialization section
+        self.classifier_model_path = model_path
+        self.item_classifier = Classifier()
+        self.item_classifier.import_model(self.classifier_model_path)
 
-        # Initialize all topics
-        for topic in self.subscribed_topics:
-            sub = self.Subscriber(topic)
-            self.subscribers.append(sub)
-        for topic in self.published_topics:
-            pub = self.Publisher(topic)
-            self.publishers.append(pub)
-
-        self.exitFlag = False
-        self.start()
+        # Run node
+        super(TableNode, self).__init__(node_name, subscribed_topics, published_topics, language=language)
+        debug(DBGLevel.CRITICAL, "Table node has been initialized")
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -144,11 +102,6 @@ class TableNode(QtCore.QThread):
     def publish_image(self, image):
         self.publish_msg_on_topic("/raw_image", prepare_image_msg("Intelligent table node", image))
 
-    def publish_msg_on_topic(self, topic_name, msg):
-        for pub in self.publishers:
-            if pub.topic.name == topic_name:
-                pub.publish(msg)
-
     def new_image_from_sensor(self):
         self.new_image_flag = True
 
@@ -170,10 +123,6 @@ class TableNode(QtCore.QThread):
             return self.translation.itemPlacementTranslationDict[self.actual_item.placement]
         else:
             return self.translation.itemPlacementTranslationDict[ItemPlacement.unknown]
-
-    def get_node_status(self):
-        # TODO describe and use this statuses in code
-        return self.translation.nodeStatusTranslationDictionary[self.node_status]
 
     def get_predicted_weight(self):
         if self.actual_item.weight > 0.0:
@@ -206,6 +155,8 @@ class TableNode(QtCore.QThread):
 
     def run(self):
         while not self.exitFlag:
+            time.sleep(0.01)
+
             if self.on_flag and self.new_image_flag:
                 if self.calibrate_flag:
                     self.sensor.calibrate_sensor(self.sensor.image_actual)
@@ -222,30 +173,3 @@ class TableNode(QtCore.QThread):
                 #####
 
                 self.new_image_flag = False
-
-    class Subscriber:
-        topic = None
-        callback_function = None
-
-        def __init__(self, topic):
-            self.topic = topic
-            self.callback_function = topic.callback
-            self.sub = rospy.Subscriber(self.topic.name, self.topic.msg_type, self.subscriber_callback)
-
-        def subscriber_callback(self, data):
-            self.callback_function(data)
-
-    class Publisher:
-        topic = None
-
-        def __init__(self, topic):
-            self.topic = topic
-            self.pub = rospy.Publisher(topic.name, topic.msg_type, queue_size=topic.queue_size)
-
-        def publish(self, message):
-            if type(message) is self.topic.msg_type:
-                self.pub.publish(message)
-            else:
-                debug(DBGLevel.WARN,
-                      "Invalid publish message type, expected: " + str(self.topic.msg_type) + ", received: " + str(
-                          message) + ".")

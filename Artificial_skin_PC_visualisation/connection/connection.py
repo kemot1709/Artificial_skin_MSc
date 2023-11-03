@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 from sys import platform
 
 import serial
@@ -76,6 +77,7 @@ class Serial(QtCore.QThread):
 
         # Communication crashed
         except serial.serialutil.SerialException:
+            debug(DBGLevel.CRITICAL, "Connection with: " + port + " crashed")
             return 0
 
     def run(self):
@@ -83,6 +85,8 @@ class Serial(QtCore.QThread):
             self.ser.flush()
             try:
                 while not self.exitFlag:
+                    time.sleep(0.01)
+
                     # Read values from serial and make sure it's not garbage
                     try:
                         input_msg = self.ser.readline().decode('utf-8')

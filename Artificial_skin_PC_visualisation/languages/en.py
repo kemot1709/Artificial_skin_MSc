@@ -1,5 +1,5 @@
 from item.item import ItemType, ItemPlacement
-from nodes.template import NodeStatus
+from nodes.node_core import NodeStatus
 
 itemTranslationDict = {
         ItemType.book:        "Book",
