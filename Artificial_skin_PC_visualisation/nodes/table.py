@@ -1,4 +1,5 @@
 import rospy
+import time
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
@@ -62,6 +63,7 @@ class TableNode(Node):
 
         # Run node
         super(TableNode, self).__init__(node_name, subscribed_topics, published_topics, language=language)
+        debug(DBGLevel.CRITICAL, "Table node has been initialized")
 
     def set_sensor(self, sensor):
         self.sensor = sensor
@@ -153,6 +155,8 @@ class TableNode(Node):
 
     def run(self):
         while not self.exitFlag:
+            time.sleep(0.01)
+
             if self.on_flag and self.new_image_flag:
                 if self.calibrate_flag:
                     self.sensor.calibrate_sensor(self.sensor.image_actual)

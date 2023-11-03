@@ -32,4 +32,4 @@ if __name__ == "__main__":
     node.set_sensor(sensor)
 
     while 1:
-        pass
+        time.sleep(60)
