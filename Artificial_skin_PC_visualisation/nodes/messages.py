@@ -4,6 +4,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Header, Int32
 from sensor.data_parsing import parse_np_image_to_msg
 from debug.debug import *
+import ros_numpy
 
 
 def prepare_bool_msg(val):
@@ -30,7 +31,8 @@ def prepare_int32_msg(val):
 def prepare_image_msg(header_str, val):
     if type(header_str) is str and type(val) is np.ndarray:
         try:
-            msg = parse_np_image_to_msg(val)
+            # msg = parse_np_image_to_msg(val)
+            msg = ros_numpy.msgify(Image, val, encoding="mono8")
             msg.header = Header()
             msg.header.frame_id = header_str
         except:
