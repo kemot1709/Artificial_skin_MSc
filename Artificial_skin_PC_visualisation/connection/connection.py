@@ -99,7 +99,10 @@ class Serial(QtCore.QThread):
                     corrupted_input_msg = False
                     if len(input_msg) > 0 and input_msg[0] != '\r' and input_msg[0] != '\n' and input_msg[0] != '\0':
                         lines = input_msg.strip().split('|')
-                        lines.remove('')  # Last line is always empty
+                        try:
+                            lines.remove('')  # Last line is always empty
+                        except:
+                            pass
 
                         if len(lines) is not self.rows:
                             debug(DBGLevel.ERROR, "Bad sensor read - bad number of rows: " + str(len(lines)))

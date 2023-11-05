@@ -33,27 +33,28 @@ class TableNode(Node):
     item_classifier = None
     classifier_model_path = None
 
-    def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras"):
+    def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras",
+                 topic_prefix="/table"):
         # Setup subscribed topics
         subscribed_topics = []
-        ret = Topic("/sgn_on", Bool, callback=self.sgn_on_callback)
+        ret = Topic(topic_prefix + "/sgn_on", Bool, callback=self.sgn_on_callback)
         subscribed_topics.append(ret)
-        ret = Topic("/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
+        ret = Topic(topic_prefix + "/sgn_calibrate", Bool, callback=self.sgn_calibrate_callback)
         subscribed_topics.append(ret)
 
         # Setup published topics
         published_topics = []
-        ret = Topic("/raw_image", Image)
+        ret = Topic(topic_prefix + "/raw_image", Image)
         published_topics.append(ret)
-        ret = Topic("/status", String)
+        ret = Topic(topic_prefix + "/status", String)
         published_topics.append(ret)
-        ret = Topic("/is_placed", Bool)
+        ret = Topic(topic_prefix + "/is_placed", Bool)
         published_topics.append(ret)
-        ret = Topic("/weight", Int32)
+        ret = Topic(topic_prefix + "/weight", Int32)
         published_topics.append(ret)
-        ret = Topic("/predicted_item", String)
+        ret = Topic(topic_prefix + "/predicted_item", String)
         published_topics.append(ret)
-        ret = Topic("/location", String)
+        ret = Topic(topic_prefix + "/location", String)
         published_topics.append(ret)
 
         # Item classifier model initialization section
@@ -62,6 +63,7 @@ class TableNode(Node):
         self.item_classifier.import_model(self.classifier_model_path)
 
         # Run node
+        self.topic_prefix = topic_prefix
         super(TableNode, self).__init__(node_name, subscribed_topics, published_topics, language=language)
         debug(DBGLevel.CRITICAL, "Table node has been initialized")
 
@@ -85,22 +87,22 @@ class TableNode(Node):
         return self.on_flag
 
     def publish_is_placed(self, boolean):
-        self.publish_msg_on_topic("/is_placed", prepare_bool_msg(boolean))
+        self.publish_msg_on_topic(self.topic_prefix + "/is_placed", prepare_bool_msg(boolean))
 
     def publish_status(self, string):
-        self.publish_msg_on_topic("/status", prepare_string_msg(string))
+        self.publish_msg_on_topic(self.topic_prefix + "/status", prepare_string_msg(string))
 
     def publish_predicted_item(self, string):
-        self.publish_msg_on_topic("/predicted_item", prepare_string_msg(string))
+        self.publish_msg_on_topic(self.topic_prefix + "/predicted_item", prepare_string_msg(string))
 
     def publish_location(self, string):
-        self.publish_msg_on_topic("/location", prepare_string_msg(string))
+        self.publish_msg_on_topic(self.topic_prefix + "/location", prepare_string_msg(string))
 
     def publish_weight(self, int32):
-        self.publish_msg_on_topic("/weight", prepare_int32_msg(int32))
+        self.publish_msg_on_topic(self.topic_prefix + "/weight", prepare_int32_msg(int32))
 
     def publish_image(self, image):
-        self.publish_msg_on_topic("/raw_image", prepare_image_msg("Intelligent table node", image))
+        self.publish_msg_on_topic(self.topic_prefix + "/raw_image", prepare_image_msg("Intelligent table node", image))
 
     def new_image_from_sensor(self):
         self.new_image_flag = True
