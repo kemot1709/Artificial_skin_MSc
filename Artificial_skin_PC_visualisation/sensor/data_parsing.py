@@ -1,5 +1,4 @@
 import numpy as np
-from cv_bridge import CvBridge
 
 
 def flatten(seq):
@@ -37,12 +36,6 @@ def parse_data_to_np_image(rows, columns, raw_data):
             break
     np_image = np.array(raw_data, dtype=np.uint8)
     return np_image
-
-
-def parse_np_image_to_msg(np_image):
-    bridge = CvBridge()
-    msg = bridge.cv2_to_imgmsg(np_image, "mono8")
-    return msg
 
 
 def mask_np_image(np_image, mask):
