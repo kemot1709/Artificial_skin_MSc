@@ -1,4 +1,17 @@
 import numpy as np
+from enum import Enum
+
+
+class ImageCompensationMethod(Enum):
+    raw_input = 0
+    input_shifted_by_max_value = 1
+    input_shifted_by_calibration_value = 2
+    input_scaled_by_calibration_value = 3
+    input_scaled_to_fixed_value_A = 4
+    input_scaled_to_fixed_value_B = 5
+    input_scaled_to_fixed_value_C = 6
+    input_scaled_to_calibration_value_reduced_by_A = 7
+    input_scaled_to_calibration_value_reduced_by_B = 8
 
 
 def flatten(seq):
@@ -43,15 +56,59 @@ def mask_np_image(np_image, mask):
     pass
 
 
-def compensate_raw_image(rows, columns, image_to_compensate, calibration_image):
-    # TODO implement all possible compensation methods
-    mult_b = 0.98
-    calibrated_image = [[0 for x in range(columns)] for y in range(rows)]
+def compensate_raw_image(rows, columns, image_to_compensate, calibration_image,
+                         compensation_method=ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_B):
+    compensated_image = [[0 for x in range(columns)] for y in range(rows)]
 
-    for i in range(columns):
-        for j in range(rows):
-            calibrated_image[i][j] = image_to_compensate[i][j]
-            if calibrated_image[i][j] > mult_b * calibration_image[i][j]:
-                calibrated_image[i][j] = mult_b * calibration_image[i][j]
-            calibrated_image[i][j] = calibrated_image[i][j] * 4095 / (mult_b * calibration_image[i][j])
-    return calibrated_image
+    if compensation_method == ImageCompensationMethod.input_shifted_by_max_value:
+        image_max_value = max(max(image_to_compensate))
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j] + 4095 - image_max_value
+
+    elif compensation_method == ImageCompensationMethod.input_shifted_by_calibration_value:
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j] + 4095 - calibration_image[i][j]
+
+    elif compensation_method == ImageCompensationMethod.input_scaled_by_calibration_value:
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j] * (4095 / calibration_image[i][j])
+
+    elif compensation_method == ImageCompensationMethod.input_scaled_to_fixed_value_A \
+            or compensation_method == ImageCompensationMethod.input_scaled_to_fixed_value_B \
+            or compensation_method == ImageCompensationMethod.input_scaled_to_fixed_value_C:
+        if compensation_method == ImageCompensationMethod.input_scaled_to_fixed_value_A:
+            filter_value = 4000  # A
+        elif compensation_method == ImageCompensationMethod.input_scaled_to_fixed_value_B:
+            filter_value = 3950  # B
+        else:
+            filter_value = 3900  # C
+
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j]
+                if compensated_image[i][j] > filter_value:
+                    compensated_image[i][j] = filter_value
+                compensated_image[i][j] = int(compensated_image[i][j] * 4095 / filter_value)
+
+    elif compensation_method == ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_A \
+            or compensation_method == ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_B:
+        if compensation_method == ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_A:
+            mult_value = 0.99  # A
+        else:
+            mult_value = 0.98  # B
+
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j]
+                if compensated_image[i][j] > mult_value * calibration_image[i][j]:
+                    compensated_image[i][j] = mult_value * calibration_image[i][j]
+                compensated_image[i][j] = compensated_image[i][j] * 4095 / (mult_value * calibration_image[i][j])
+
+    else:
+        for i in range(columns):
+            for j in range(rows):
+                compensated_image[i][j] = image_to_compensate[i][j]
+    return compensated_image
