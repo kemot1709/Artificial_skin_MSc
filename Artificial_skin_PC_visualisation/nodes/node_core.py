@@ -16,17 +16,20 @@ class Topic:
 
 class NodeStatus(Enum):
     unknown = 0
-    not_connected = 1
-    connected = 2
-    connection_crashed = 3
-    connection_bad_messages = 4
-    working = 10
-    calibrating = 11
+    initializing = 1
+    working = 2
+
+    crashed = 20
+    crashed_internal = 21
+    crashed_connection = 22
+    crashed_ros = 23
 
 
 class Node(QtCore.QThread):
     language = "en"
     translation = None
+
+    node_status = NodeStatus.unknown
 
     subscribed_topics = []
     published_topics = []
@@ -34,6 +37,10 @@ class Node(QtCore.QThread):
     publishers = []
 
     def __init__(self, node_name, subscribed_topics=None, published_topics=None, language="en"):
+        # Set status
+        self.node_status = NodeStatus.initializing
+
+        # Initialize
         super(Node, self).__init__()
         rospy.init_node(node_name)
 
@@ -71,7 +78,6 @@ class Node(QtCore.QThread):
                 pub.publish(msg)
 
     def get_node_status(self):
-        # TODO describe and use this statuses in code
         return self.translation.nodeStatusTranslationDictionary[self.node_status]
 
     class Subscriber:

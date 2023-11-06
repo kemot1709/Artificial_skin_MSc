@@ -1,8 +1,7 @@
 from connection.connection import Serial
 import copy
 
-from sensor.data_parsing import parse_data_to_np_image, parse_np_image_to_msg, cast_data_to_uint8, \
-    compensate_raw_image
+from sensor.data_parsing import parse_data_to_np_image, cast_data_to_uint8, compensate_raw_image
 from sensor.params import Params
 from debug.debug import *
 
@@ -37,6 +36,9 @@ class Sensor:
 
     def set_parent_node(self, node):
         self.parent_node = node
+
+    def get_usb_connected(self):
+        return self.usb_connected
 
     def new_data_received(self, n_rows, n_columns, new_pressure_map):
         # TODO sometimes incoming data are corrupted (values like 4). It has to be filtered out

@@ -1,5 +1,6 @@
 from item.item import ItemType, ItemPlacement
 from nodes.node_core import NodeStatus
+from nodes.table import TableStatus
 
 itemTranslationDict = {
         ItemType.book:        "Book",
@@ -29,11 +30,16 @@ itemPlacementTranslationDict = {
 }
 
 nodeStatusTranslationDictionary = {
-        NodeStatus.unknown:                 "Unknown",
-        NodeStatus.not_connected:           "Initialized but not connected to controller",
-        NodeStatus.connected:               "Initialized, connected to controller but turned off",
-        NodeStatus.connection_crashed:      "Connection with controller is interrupted",
-        NodeStatus.connection_bad_messages: "Controller sends unrecognized data",
-        NodeStatus.working:                 "Node working well",
-        NodeStatus.calibrating:             "Node calibrate itself",
+        NodeStatus.unknown:            "Unknown",
+        NodeStatus.initializing:       "Initializing",
+        NodeStatus.working:            "Working",
+
+        NodeStatus.crashed:            "Crashed unknown",
+        NodeStatus.crashed_internal:   "Crashed internal",
+        NodeStatus.crashed_connection: "Crashed communication",
+        NodeStatus.crashed_ros:        "Crashed ROS",
+
+        TableStatus.table_off:         "Working off",
+        TableStatus.table_working:     "Working on",
+        TableStatus.table_calibrating: "Working calibrating",
 }

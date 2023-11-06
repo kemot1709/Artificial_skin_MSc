@@ -18,13 +18,18 @@ from classifier.image_recognition import Classifier
 from debug.debug import *
 
 
+class TableStatus(NodeStatus):
+    table_working = 101
+    table_calibrating = 102
+    table_off = 103
+
+
 class TableNode(Node):
     sensor = None
 
     on_flag = False
     calibrate_flag = False
     new_image_flag = False
-    node_status = NodeStatus.unknown
 
     mask = ImageMask()
     actual_item = None
@@ -35,6 +40,9 @@ class TableNode(Node):
 
     def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras",
                  topic_prefix="/table"):
+        # Set status
+        self.node_status = TableStatus.initializing
+
         # Setup subscribed topics
         subscribed_topics = []
         ret = Topic(topic_prefix + "/sgn_on", Bool, callback=self.sgn_on_callback)
@@ -65,6 +73,7 @@ class TableNode(Node):
         # Run node
         self.topic_prefix = topic_prefix
         super(TableNode, self).__init__(node_name, subscribed_topics, published_topics, language=language)
+        self.node_status = TableStatus.table_off
         debug(DBGLevel.CRITICAL, "Table node has been initialized")
 
     def set_sensor(self, sensor):
@@ -76,9 +85,23 @@ class TableNode(Node):
             self.on_flag = data.data
             self.new_image_flag = False
 
+        if self.on_flag and self.node_status is TableStatus.table_off:
+            self.node_status = TableStatus.table_working
+        if not self.on_flag and (
+                self.node_status is TableStatus.table_working or self.node_status is TableStatus.table_calibrating):
+            self.node_status = TableStatus.table_off
+
     def sgn_calibrate_callback(self, data=None):
         if type(data) is Bool:
             self.calibrate_flag = data.data
+
+        if self.calibrate_flag and self.node_status is TableStatus.table_working:
+            self.node_status = TableStatus.table_calibrating
+        if not self.calibrate_flag:
+            if self.on_flag:
+                self.node_status = TableStatus.table_working
+            else:
+                self.node_status = TableStatus.table_off
 
     def get_calibration_flag(self):
         return self.calibrate_flag
