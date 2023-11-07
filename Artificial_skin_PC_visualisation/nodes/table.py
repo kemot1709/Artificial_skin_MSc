@@ -18,7 +18,7 @@ from classifier.image_recognition import Classifier
 from debug.debug import *
 
 
-class TableStatus(NodeStatus):
+class TableStatus(NodeStatus, Enum):
     table_working = 101
     table_calibrating = 102
     table_off = 103
@@ -182,6 +182,14 @@ class TableNode(Node):
         while not self.exitFlag:
             time.sleep(0.01)
 
+            # Check status of connections and subsystems
+            if self.sensor.get_usb_connected():
+                if self.node_status == TableStatus.crashed_connection:
+                    self.node_status = TableStatus.table_off
+            else:
+                self.node_status = TableStatus.crashed_connection
+
+            # Check for new image and handle it
             if self.on_flag and self.new_image_flag:
                 if self.calibrate_flag:
                     self.sensor.calibrate_sensor(self.sensor.image_actual)

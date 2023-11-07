@@ -32,7 +32,14 @@ class Sensor:
         self.usb_port = usb_port
 
     def connect_to_controller(self):
-        self.ser.connect_to_controller(self.usb_port)
+        if self.ser.connect_to_controller(self.usb_port):
+            self.usb_connected = True
+        else:
+            self.usb_connected = False
+
+    def connection_crashed(self):
+        # TODO make usage of this function
+        self.usb_connected = False
 
     def set_parent_node(self, node):
         self.parent_node = node

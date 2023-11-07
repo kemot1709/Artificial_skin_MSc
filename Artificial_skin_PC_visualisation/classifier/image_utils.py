@@ -4,7 +4,6 @@ import keras
 import cv2
 
 from item.item import Item, ItemType
-from languages import en as translation
 
 
 class LabelsMap:
@@ -40,6 +39,8 @@ class LabelsMap:
         return labels
 
     def mapOrdinalNumbersToLabelNames(self, ordinalNumbers):
+        from languages import en as translation
+
         labels = self.mapOrdinalNumbersToLabels(ordinalNumbers)
         labels = labels.values
         labelNames = []
