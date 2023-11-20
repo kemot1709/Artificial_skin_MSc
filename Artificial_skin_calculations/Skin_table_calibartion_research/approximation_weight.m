@@ -11,11 +11,11 @@ min_weights = extractfield(data, 'work_min');
 min_weights = reshape(min_weights, [], size(data, 1));
 
 % Plot data before approximation
-x1 = avg;
-y1 = weights;
-x1_dn = [0, min_weights(method, :)];
-x1_up = [0, max_weights(method, :)];
-plot_method(x1, y1, x1_dn, x1_up, 'Aproksymacja wybranego sposobu kompensacji');
+y1 = avg;
+x1 = weights;
+y1_dn = [0, min_weights(method, :)];
+y1_up = [0, max_weights(method, :)];
+plot_method(x1, y1, y1_dn, y1_up, 'Approximation of the selected compensation method');
 hold on;
 
 % Aproksymacja danych
@@ -26,7 +26,7 @@ plot(xFit, yFit, 'r-');
 plot(xFit, xFit, 'g-');
 
 grid on;
-legend('Wybrana metoda kompensacji', 'Aproksymacja', 'Rzeczywisty pomiar wagi', 'Location', 'Best');
+legend('Selected compensation method', 'Approximation', 'Real weight', 'Location', 'Best');
 hold off;
 end
 
