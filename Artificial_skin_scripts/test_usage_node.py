@@ -10,6 +10,7 @@ from move_base_msgs.msg import MoveBaseActionResult
 
 from nodes.node_core import Topic, Node
 from nodes.table import TableStatus
+from nodes.messages import prepare_string_msg
 
 # Global variables - Have to do it better but later
 g_move_status = 0
@@ -85,7 +86,14 @@ def move_status_callback(data=None):
 
 
 def rico_heard_callback(data=None):
-    pass
+    global g_command_arrived
+    global g_command
+    if type(data) is String:
+        g_command = data.data
+        g_command_arrived = True
+    else:
+        g_command = ""
+        g_command_arrived = False
 
 
 def list_of_subscribed_topics():
@@ -101,6 +109,8 @@ def list_of_subscribed_topics():
     topics.append(ret)
     ret = Topic("/move_base/result", MoveBaseActionResult, callback=move_status_callback())
     topics.append(ret)
+    ret = Topic("/txt_msg", String, callback=rico_heard_callback())
+    topics.append(ret)
 
     return topics
 
@@ -112,6 +122,8 @@ def list_of_published_topics(topic_prefix):
     ret = Topic(topic_prefix + "/status", String)
     topics.append(ret)
     ret = Topic("/move_base_simple/goal", PoseStamped)
+    topics.append(ret)
+    ret = Topic("/txt_send", String)
     topics.append(ret)
 
     return topics
@@ -147,7 +159,8 @@ def go_to_position(node, position):
 
 
 def say_sth(node, text_to_say):
-    pass
+    node.publish_msg_on_topic("/txt_send", prepare_string_msg(text_to_say))
+    return 0
 
 
 def wait_for_item_placed(node, item):
