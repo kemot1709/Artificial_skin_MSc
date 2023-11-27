@@ -31,23 +31,22 @@ else
 end
 
 % Plot comparison between methods
-figure('Name', 'Porównanie wybranych sposobów kompensacji w zale¿noœci od przy³o¿onego nacisku');
-plot([avg(columns, :)'; weights(columns)], weights(columns));
+figure('Name', 'Comparison of selected compensation methods depending on applied weight');
+plot(weights(columns), [avg(columns, :)'; weights(columns)]);
 grid
 legend('Location', 'Best');
-legend('Kompensacja 1', 'Kompensacja 2', 'Kompensacja 3', 'Kompensacja 4', 'Kompensacja 5', ...
-    'Kompensacja 6', 'Kompensacja 7', 'Kompensacja 8', 'Kompensacja 9', 'Pomiar wagi')
-xlabel('Waga odczytana przez sztuczn¹ skórê');
-ylabel('Rzeczywista waga przedmiotu');
-title('Porównanie wybranych sposobów kompensacji w zale¿noœci od przy³o¿onego nacisku');
-
+legend('Method 1', 'Method 2', 'Method 3', 'Method 4', 'Method 5', ...
+    'Method 6', 'Method 7', 'Method 8', 'Method 9', 'Real weight')
+ylabel('Weight read by tactile sensor');
+xlabel('Real weight of item');
+title('Comparison of selected compensation methods depending on applied weight');
 
 for i = 1:size(avg, 2)
-    x1 = avg(:, i)';
-    y1 = weights;
-    x1_dn = [0, min_weights(:, i)'];
-    x1_up = [0, max_weights(:, i)'];
-    plot_method(x1(columns), y1(columns), x1_dn(columns), x1_up(columns), char(names(i)));
+    x1 = weights;
+    y1 = avg(:, i)';
+    y1_dn = [0, min_weights(:, i)'];
+    y1_up = [0, max_weights(:, i)'];
+    plot_method(x1(columns), y1(columns), y1_dn(columns), y1_up(columns), char(names(i)));
 end
 
 ret = 0;

@@ -1,9 +1,9 @@
-function fig = plot_method(x, y, x_dn, x_up, name)
+function fig = plot_method(x, y, y_dn, y_up, name)
 
 fig = figure('Name', name);
-errorbar(x, y, [], [], x-x_dn, x_up-x, '*-b');
-xlabel('Waga odczytana przez sztuczn¹ skórê');
-ylabel('Rzeczywista waga przedmiotu');
+errorbar(x, y, y-y_dn, y_up-y, [], [], '*-b');
+ylabel('Weight read by tactile sensor');
+xlabel('Real weight of item');
 title(name);
 
 end
