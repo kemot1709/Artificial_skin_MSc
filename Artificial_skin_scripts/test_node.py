@@ -14,7 +14,7 @@ from sensor.sensor import Sensor
 def default_port_name():
     if platform == "linux" or platform == "linux2":
         # os.chmod('/dev/ttyUSB0', 0o666)
-        return '/dev/ttyUSB2'
+        return '/dev/ttyUSB0'
     elif platform == "darwin":
         print("Change your computer")
         exit()

@@ -12,6 +12,8 @@ from nodes.node_core import Topic, Node
 from nodes.table import TableStatus
 from nodes.messages import prepare_string_msg
 
+from debug.debug import debug, DBGLevel
+
 # Global variables - Have to do it better but later
 g_move_status = 0
 g_item_placed_status = False
@@ -23,6 +25,7 @@ g_command_arrived = False
 g_command = ""
 
 
+# TODO properly implement this shit
 # dialogflow
 # language_processor
 
@@ -99,17 +102,17 @@ def rico_heard_callback(data=None):
 def list_of_subscribed_topics():
     topics = []
 
-    ret = Topic("/table/is_placed", Bool, callback=item_placed_callback())
+    ret = Topic("/table/is_placed", Bool, callback=item_placed_callback)
     topics.append(ret)
-    ret = Topic("/table/weight", Int32, callback=item_weight_callback())
+    ret = Topic("/table/weight", Int32, callback=item_weight_callback)
     topics.append(ret)
-    ret = Topic("/table/predicted_item", String, callback=item_predicted_callback())
+    ret = Topic("/table/predicted_item", String, callback=item_predicted_callback)
     topics.append(ret)
-    ret = Topic("/table/location", String, callback=item_location_callback())
+    ret = Topic("/table/location", String, callback=item_location_callback)
     topics.append(ret)
-    ret = Topic("/move_base/result", MoveBaseActionResult, callback=move_status_callback())
+    ret = Topic("/move_base/result", MoveBaseActionResult, callback=move_status_callback)
     topics.append(ret)
-    ret = Topic("/txt_msg", String, callback=rico_heard_callback())
+    ret = Topic("/txt_send", String, callback=rico_heard_callback)  # Rico heard that thing
     topics.append(ret)
 
     return topics
@@ -119,11 +122,11 @@ def list_of_published_topics(topic_prefix):
     topics = []
 
     # TODO publish status of this node
-    ret = Topic(topic_prefix + "/status", String)
-    topics.append(ret)
+    # ret = Topic(topic_prefix + "/status", String)
+    # topics.append(ret)
     ret = Topic("/move_base_simple/goal", PoseStamped)
     topics.append(ret)
-    ret = Topic("/txt_send", String)
+    ret = Topic("/txt_msg", String)  # Rico say that thing
     topics.append(ret)
 
     return topics
@@ -131,12 +134,21 @@ def list_of_published_topics(topic_prefix):
 
 def get_pose_kitchen():
     # TODO get coordinates of locations
+    # TODO positions to json or xml
     pose = PoseStamped()
     pose.header.frame_id = "map"
     pose.pose.position.x = 2.901
     pose.pose.position.y = -0.402
     pose.pose.orientation.z = -1.532
     return pose
+
+
+def get_pose_docker():
+    pass
+
+
+def get_pose_table():
+    pass
 
 
 def go_to_position(node, position):
@@ -154,7 +166,7 @@ def go_to_position(node, position):
         # Success
         if g_move_status == 3:
             say_sth(node, "Arrived")
-            return 3
+            return 0
         time.sleep(0.1)
 
 
@@ -165,10 +177,18 @@ def say_sth(node, text_to_say):
 
 def wait_for_item_placed(node, item):
     say_sth(node, "Dej przedmiot")
+    # TODO check weight and item type
     while 1:
         if g_item_placed_status:
-            # TODO check if properly placed
-            return 0
+            if g_item_location == "Center of table" or g_item_location == "Side of table":
+                return 0
+            elif g_item_location == "Edge of table":
+                debug(DBGLevel.WARN, "Item placed on edge")
+                say_sth(node, "Proszę popraw położenie przedmiotu")
+                time.sleep(5)
+                continue
+            else:
+                pass
         time.sleep(1)
 
 
@@ -182,19 +202,30 @@ def wait_for_item_taken(node, item):
 
 def handle_give_tea_command(node):
     # Go to kitchen
-    if go_to_position(node, "kitchen") != 3:
+    debug(DBGLevel.INFO, "I go to the kitchen")
+    if go_to_position(node, "kitchen") != 0:
+        debug(DBGLevel.CRITICAL, "Cannot drive to kitchen")
         say_sth(node, "Dupa")
         return -1
+
     # Get mug of tea
+    debug(DBGLevel.INFO, "I wait for fullmug to be placed")
     if not wait_for_item_placed(node, "fullmug"):
+        debug(DBGLevel.CRITICAL, "Cannot get item fullmug")
         say_sth(node, "Alohomora")
         return -1
+
     # Go to task giver
-    if go_to_position(node, "table") != 3:
+    debug(DBGLevel.INFO, "I go to the table")
+    if go_to_position(node, "table") != 0:
+        debug(DBGLevel.CRITICAL, "Cannot drive to table")
         say_sth(node, "Dupa")
         return -1
+
     # Acknowledge tea take off
+    debug(DBGLevel.INFO, "I wait for fullmug to be taken")
     if not wait_for_item_taken(node, "fullmug"):
+        debug(DBGLevel.CRITICAL, "Cannot get rid of item fullmug")
         say_sth(node, "Alohomora")
         return -1
     return 0
@@ -202,15 +233,23 @@ def handle_give_tea_command(node):
 
 def handle_drop_mug_command(node):
     # Take mug from task giver
+    debug(DBGLevel.INFO, "I wait for emptymug to be placed")
     if not wait_for_item_placed(node, "emptymug"):
+        debug(DBGLevel.CRITICAL, "Cannot get item emptymug")
         say_sth(node, "Nie")
         return -1
+
     # Go to kitchen
-    if go_to_position(node, "kitchen") != 3:
+    debug(DBGLevel.INFO, "I go to the kitchen")
+    if go_to_position(node, "kitchen") != 0:
+        debug(DBGLevel.CRITICAL, "Cannot drive to kitchen")
         say_sth(node, "Hahaha")
         return -1
+
     # Acknowledge mug take off
+    debug(DBGLevel.INFO, "I wait for emptymug to be taken")
     if not wait_for_item_taken(node, "emptymug"):
+        debug(DBGLevel.CRITICAL, "Cannot get rid of item emptymug")
         say_sth(node, "Nie")
         return -1
     return 0
@@ -226,6 +265,13 @@ if __name__ == "__main__":
         if g_command_arrived:
             g_command_arrived = False
             if g_command != "":
-                print(g_command)
+                debug(DBGLevel.DETAILS, g_command)
+
+            if g_command == "A":
+                handle_give_tea_command(usage_node)
+            elif g_command == "B":
+                handle_drop_mug_command(usage_node)
+            else:
+                debug(DBGLevel.WARN, g_command)
 
         time.sleep(1)
