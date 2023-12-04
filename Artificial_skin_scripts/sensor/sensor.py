@@ -32,7 +32,7 @@ class Sensor:
         self.usb_port = usb_port
 
     def connect_to_controller(self):
-        if self.ser.connect_to_controller(self.usb_port):
+        if self.ser.connect_to_controller(self.usb_port) == 0:
             self.usb_connected = True
         else:
             self.usb_connected = False
