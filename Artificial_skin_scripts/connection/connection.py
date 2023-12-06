@@ -63,6 +63,20 @@ class Serial(QtCore.QThread):
             list_of_ports.append(port.device)
         return list_of_ports
 
+    @staticmethod
+    def default_port_name():
+        if platform == "linux" or platform == "linux2":
+            # os.chmod('/dev/ttyUSB0', 0o666)
+            return '/dev/ttyUSB0'
+        elif platform == "darwin":
+            debug(DBGLevel.CRITICAL, "Change your computer")
+            return None
+        elif platform == "win32":
+            return 'COM3'
+        else:
+            debug(DBGLevel.CRITICAL, "Unknown operating system")
+            return None
+
     def connect_to_controller(self, port):
         try:
             self.ser = serial.Serial(port)
@@ -77,7 +91,7 @@ class Serial(QtCore.QThread):
 
         # Communication crashed
         except serial.serialutil.SerialException:
-            debug(DBGLevel.CRITICAL, "Connection with: " + port + " crashed")
+            debug(DBGLevel.CRITICAL, "Connection with: " + port + " crashed. Check if you have right permissions")
             return 1
 
         return 0
