@@ -10,7 +10,7 @@ from move_base_msgs.msg import MoveBaseActionResult
 
 from nodes.node_core import Topic, Node
 from nodes.table import TableStatus
-from nodes.messages import prepare_string_msg
+from nodes.messages import prepare_string_msg, prepare_pose_stamped_msg
 
 from debug.debug import debug, DBGLevel
 
@@ -126,7 +126,7 @@ def list_of_published_topics(topic_prefix):
     # topics.append(ret)
     ret = Topic("/move_base_simple/goal", PoseStamped)
     topics.append(ret)
-    ret = Topic("/txt_msg", String)  # Rico say that thing
+    ret = Topic("/txt_msg", String)  # Rico will say that thing
     topics.append(ret)
 
     return topics
@@ -135,42 +135,22 @@ def list_of_published_topics(topic_prefix):
 def get_pose_kitchen():
     # TODO positions to json or xml
     # TODO make positions again when new map will be available
-    pose = PoseStamped()
-    pose.header.frame_id = "map"
-    pose.pose.position.x = 5.5
-    pose.pose.position.y = 0.0
-    pose.pose.orientation.z = 1
-    pose.pose.orientation.w = 1
+    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=0.0, rot_z=1.0)
     return pose
 
 
 def get_pose_docker():
-    pose = PoseStamped()
-    pose.header.frame_id = "map"
-    pose.pose.position.x = 4.5
-    pose.pose.position.y = 6.9
-    pose.pose.orientation.z = 5
-    pose.pose.orientation.w = 1
+    pose = prepare_pose_stamped_msg(pos_x=4.5, pos_y=6.9, rot_z=5.0)
     return pose
 
 
 def get_pose_table():
-    pose = PoseStamped()
-    pose.header.frame_id = "map"
-    pose.pose.position.x = 5.5
-    pose.pose.position.y = 8.0
-    pose.pose.orientation.z = -1
-    pose.pose.orientation.w = 1
+    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=8.0, rot_z=-1.0)
     return pose
 
 
 def get_pose_default():
-    pose = PoseStamped()
-    pose.header.frame_id = "map"
-    pose.pose.position.x = 4.25
-    pose.pose.position.y = 6.97
-    pose.pose.orientation.z = -0.1
-    pose.pose.orientation.w = 1
+    pose = prepare_pose_stamped_msg(pos_x=4.25, pos_y=6.97, rot_z=-0.1)
     return pose
 
 
@@ -187,7 +167,7 @@ def go_to_position(node, position):
     elif position == "default":
         goal = get_pose_default()
     else:
-        goal = get_pose_kitchen()
+        goal = get_pose_default()
 
     node.publish_msg_on_topic("/move_base_simple/goal", goal)
     g_move_status = 0  # Have to reset move status after publishing message
@@ -202,7 +182,7 @@ def go_to_position(node, position):
             # Failure
             else:
                 say_sth(node, "Not arrived")
-                debug(DBGLevel.ERROR, "Cannot arrive to target: " + position)
+                debug(DBGLevel.ERROR, "Cannot arrive to target: " + position + " Code: " + str(g_move_status))
                 return 1
 
         time.sleep(0.1)
