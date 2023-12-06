@@ -133,22 +133,45 @@ def list_of_published_topics(topic_prefix):
 
 
 def get_pose_kitchen():
-    # TODO get coordinates of locations
     # TODO positions to json or xml
+    # TODO make positions again when new map will be available
     pose = PoseStamped()
     pose.header.frame_id = "map"
-    pose.pose.position.x = 2.901
-    pose.pose.position.y = -0.402
-    pose.pose.orientation.z = -1.532
+    pose.pose.position.x = 5.5
+    pose.pose.position.y = 0.0
+    pose.pose.orientation.z = 1
+    pose.pose.orientation.w = 1
     return pose
 
 
 def get_pose_docker():
-    pass
+    pose = PoseStamped()
+    pose.header.frame_id = "map"
+    pose.pose.position.x = 4.5
+    pose.pose.position.y = 6.9
+    pose.pose.orientation.z = 5
+    pose.pose.orientation.w = 1
+    return pose
 
 
 def get_pose_table():
-    pass
+    pose = PoseStamped()
+    pose.header.frame_id = "map"
+    pose.pose.position.x = 5.5
+    pose.pose.position.y = 8.0
+    pose.pose.orientation.z = -1
+    pose.pose.orientation.w = 1
+    return pose
+
+
+def get_pose_default():
+    pose = PoseStamped()
+    pose.header.frame_id = "map"
+    pose.pose.position.x = 4.25
+    pose.pose.position.y = 6.97
+    pose.pose.orientation.z = -0.1
+    pose.pose.orientation.w = 1
+    return pose
 
 
 def go_to_position(node, position):
@@ -157,21 +180,36 @@ def go_to_position(node, position):
     # TODO enum with possible Poses
     if position == "kitchen":
         goal = get_pose_kitchen()
+    elif position == "stolik":
+        goal = get_pose_table()
+    elif position == "dock":
+        goal = get_pose_docker()
+    elif position == "default":
+        goal = get_pose_default()
     else:
         goal = get_pose_kitchen()
 
     node.publish_msg_on_topic("/move_base_simple/goal", goal)
+    g_move_status = 0  # Have to reset move status after publishing message
 
     while 1:
-        # Success
-        if g_move_status == 3:
-            say_sth(node, "Arrived")
-            return 0
+        # Move ended
+        if g_move_status != 0:
+            # Success
+            if g_move_status == 3:
+                say_sth(node, "Arrived")
+                return 0
+            # Failure
+            else:
+                say_sth(node, "Not arrived")
+                debug(DBGLevel.ERROR, "Cannot arrive to target: " + position)
+                return 1
+
         time.sleep(0.1)
 
 
 def say_sth(node, text_to_say):
-    node.publish_msg_on_topic("/txt_send", prepare_string_msg(text_to_say))
+    # node.publish_msg_on_topic("/txt_send", prepare_string_msg(text_to_say))
     return 0
 
 

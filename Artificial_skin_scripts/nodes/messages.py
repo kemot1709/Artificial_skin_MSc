@@ -6,6 +6,8 @@ from debug.debug import *
 import ros_numpy
 
 
+# TODO PoseStamped
+
 def prepare_bool_msg(val):
     if type(val) is bool:
         msg = Bool()
