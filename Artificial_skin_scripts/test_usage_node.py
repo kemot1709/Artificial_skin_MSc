@@ -7,6 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from std_msgs.msg import Bool, String, Int32
 from geometry_msgs.msg import PoseStamped
 from move_base_msgs.msg import MoveBaseActionResult
+from tiago_msgs.msg import SaySentenceActionGoal
 
 from nodes.node_core import Topic, Node
 from nodes.table import TableStatus
@@ -23,11 +24,6 @@ g_item_location = ""
 g_table_status = TableStatus.unknown
 g_command_arrived = False
 g_command = ""
-
-
-# TODO properly implement this shit
-# dialogflow
-# language_processor
 
 
 def item_placed_callback(data=None):
@@ -91,6 +87,10 @@ def move_status_callback(data=None):
 def rico_heard_callback(data=None):
     global g_command_arrived
     global g_command
+
+    print(data.data)
+    return
+
     if type(data) is String:
         g_command = data.data
         g_command_arrived = True
@@ -112,7 +112,7 @@ def list_of_subscribed_topics():
     topics.append(ret)
     ret = Topic("/move_base/result", MoveBaseActionResult, callback=move_status_callback)
     topics.append(ret)
-    ret = Topic("/txt_send", String, callback=rico_heard_callback)  # Rico heard that thing
+    ret = Topic("/rico_heard", String, callback=rico_heard_callback)  # Rico heard that thing
     topics.append(ret)
 
     return topics
@@ -126,7 +126,7 @@ def list_of_published_topics(topic_prefix):
     # topics.append(ret)
     ret = Topic("/move_base_simple/goal", PoseStamped)
     topics.append(ret)
-    ret = Topic("/txt_msg", String)  # Rico will say that thing
+    ret = Topic("/rico_says/goal", SaySentenceActionGoal)  # Rico will say that thing
     topics.append(ret)
 
     return topics
@@ -189,7 +189,10 @@ def go_to_position(node, position):
 
 
 def say_sth(node, text_to_say):
-    # node.publish_msg_on_topic("/txt_send", prepare_string_msg(text_to_say))
+    goal = SaySentenceActionGoal()
+    goal.goal.sentence = text_to_say
+    # node.publish_msg_on_topic("/rico_says/goal", prepare_string_msg(text_to_say))
+    node.publish_msg_on_topic("/rico_says/goal", goal)
     return 0
 
 
@@ -277,6 +280,10 @@ if __name__ == "__main__":
     subscribed_topics = list_of_subscribed_topics()
     published_topics = list_of_published_topics('/test_usage')
     usage_node = Node('table_usage', subscribed_topics, published_topics)
+
+
+    time.sleep(10)
+    say_sth(usage_node,"Węzeł zainicjalizowany")
 
     while 1:
         # Wait for commands
