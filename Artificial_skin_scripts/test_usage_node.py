@@ -88,10 +88,8 @@ def rico_heard_callback(data=None):
     global g_command_arrived
     global g_command
 
-    print(data.data)
-    return
-
     if type(data) is String:
+        debug(DBGLevel.INFO,"Rico heard: "+data.data)
         g_command = data.data
         g_command_arrived = True
     else:
@@ -112,7 +110,7 @@ def list_of_subscribed_topics():
     topics.append(ret)
     ret = Topic("/move_base/result", MoveBaseActionResult, callback=move_status_callback)
     topics.append(ret)
-    ret = Topic("/rico_heard", String, callback=rico_heard_callback)  # Rico heard that thing
+    ret = Topic("/rico_hear", String, callback=rico_heard_callback)  # Rico heard that thing
     topics.append(ret)
 
     return topics
@@ -230,11 +228,11 @@ def handle_give_tea_command(node):
         return -1
 
     # Get mug of tea
-    debug(DBGLevel.INFO, "I wait for fullmug to be placed")
-    if not wait_for_item_placed(node, "fullmug"):
-        debug(DBGLevel.CRITICAL, "Cannot get item fullmug")
-        say_sth(node, "Alohomora")
-        return -1
+    # debug(DBGLevel.INFO, "I wait for fullmug to be placed")
+    # if not wait_for_item_placed(node, "fullmug"):
+    #     debug(DBGLevel.CRITICAL, "Cannot get item fullmug")
+    #     say_sth(node, "Alohomora")
+    #     return -1
 
     # Go to task giver
     debug(DBGLevel.INFO, "I go to the table")
@@ -244,21 +242,21 @@ def handle_give_tea_command(node):
         return -1
 
     # Acknowledge tea take off
-    debug(DBGLevel.INFO, "I wait for fullmug to be taken")
-    if not wait_for_item_taken(node, "fullmug"):
-        debug(DBGLevel.CRITICAL, "Cannot get rid of item fullmug")
-        say_sth(node, "Alohomora")
-        return -1
+    # debug(DBGLevel.INFO, "I wait for fullmug to be taken")
+    # if not wait_for_item_taken(node, "fullmug"):
+    #     debug(DBGLevel.CRITICAL, "Cannot get rid of item fullmug")
+    #     say_sth(node, "Alohomora")
+    #     return -1
     return 0
 
 
 def handle_drop_mug_command(node):
     # Take mug from task giver
-    debug(DBGLevel.INFO, "I wait for emptymug to be placed")
-    if not wait_for_item_placed(node, "emptymug"):
-        debug(DBGLevel.CRITICAL, "Cannot get item emptymug")
-        say_sth(node, "Nie")
-        return -1
+    # debug(DBGLevel.INFO, "I wait for emptymug to be placed")
+    # if not wait_for_item_placed(node, "emptymug"):
+    #     debug(DBGLevel.CRITICAL, "Cannot get item emptymug")
+    #     say_sth(node, "Nie")
+    #     return -1
 
     # Go to kitchen
     debug(DBGLevel.INFO, "I go to the kitchen")
@@ -268,11 +266,11 @@ def handle_drop_mug_command(node):
         return -1
 
     # Acknowledge mug take off
-    debug(DBGLevel.INFO, "I wait for emptymug to be taken")
-    if not wait_for_item_taken(node, "emptymug"):
-        debug(DBGLevel.CRITICAL, "Cannot get rid of item emptymug")
-        say_sth(node, "Nie")
-        return -1
+    # debug(DBGLevel.INFO, "I wait for emptymug to be taken")
+    # if not wait_for_item_taken(node, "emptymug"):
+    #     debug(DBGLevel.CRITICAL, "Cannot get rid of item emptymug")
+    #     say_sth(node, "Nie")
+    #     return -1
     return 0
 
 
@@ -281,10 +279,6 @@ if __name__ == "__main__":
     published_topics = list_of_published_topics('/test_usage')
     usage_node = Node('table_usage', subscribed_topics, published_topics)
 
-
-    time.sleep(10)
-    say_sth(usage_node,"Węzeł zainicjalizowany")
-
     while 1:
         # Wait for commands
         if g_command_arrived:
@@ -292,9 +286,9 @@ if __name__ == "__main__":
             if g_command != "":
                 debug(DBGLevel.DETAILS, g_command)
 
-            if g_command == "A":
+            if g_command == "Przywieź mi herbatę" or g_command == "Przywieź mi herbatę." or g_command == "Przywieź mi herbatę!":
                 handle_give_tea_command(usage_node)
-            elif g_command == "B":
+            elif g_command == "Odwieź kubek do kuchni":
                 handle_drop_mug_command(usage_node)
             else:
                 debug(DBGLevel.WARN, g_command)
