@@ -11,7 +11,7 @@ from tiago_msgs.msg import SaySentenceActionGoal
 
 from nodes.node_core import Topic, Node
 from nodes.table import TableStatus
-from nodes.messages import prepare_string_msg, prepare_pose_stamped_msg
+from nodes.messages import prepare_string_msg, prepare_pose_stamped_msg, prepare_sentence_action_goal
 
 from debug.debug import debug, DBGLevel
 
@@ -89,7 +89,7 @@ def rico_heard_callback(data=None):
     global g_command
 
     if type(data) is String:
-        debug(DBGLevel.INFO,"Rico heard: "+data.data)
+        debug(DBGLevel.INFO, "Rico heard: " + data.data)
         g_command = data.data
         g_command_arrived = True
     else:
@@ -120,6 +120,7 @@ def list_of_published_topics(topic_prefix):
     topics = []
 
     # TODO publish status of this node
+    # nie status, tylko opublikować wiadomość raz, po wykonaniu/failu zadania
     # ret = Topic(topic_prefix + "/status", String)
     # topics.append(ret)
     ret = Topic("/move_base_simple/goal", PoseStamped)
@@ -158,14 +159,22 @@ def go_to_position(node, position):
     # TODO enum with possible Poses
     if position == "kitchen":
         goal = get_pose_kitchen()
+        pl_position = "kuchni"
     elif position == "stolik":
+        pl_position = "stolika"
         goal = get_pose_table()
     elif position == "dock":
+        pl_position = "stacji dokującej"
         goal = get_pose_docker()
     elif position == "default":
+        pl_position = "pozycji domyślnej"
         goal = get_pose_default()
     else:
+        pl_position = "chuj wie gdzie"
         goal = get_pose_default()
+
+    debug(DBGLevel.INFO, "I go to the " + position)
+    robot_say_sth(node, "Jadę do " + pl_position)
 
     node.publish_msg_on_topic("/move_base_simple/goal", goal)
     g_move_status = 0  # Have to reset move status after publishing message
@@ -175,102 +184,116 @@ def go_to_position(node, position):
         if g_move_status != 0:
             # Success
             if g_move_status == 3:
-                say_sth(node, "Arrived")
+                debug(DBGLevel.INFO, "I arrived to the " + position)
                 return 0
             # Failure
             else:
-                say_sth(node, "Not arrived")
-                debug(DBGLevel.ERROR, "Cannot arrive to target: " + position + " Code: " + str(g_move_status))
+                robot_say_sth(node, "Nie jestem w stanie dojechać do " + pl_position)
+                debug(DBGLevel.ERROR, "Cannot arrive to the " + position + " Code: " + str(g_move_status))
                 return 1
 
-        time.sleep(0.1)
+        time.sleep(1)
 
 
-def say_sth(node, text_to_say):
-    goal = SaySentenceActionGoal()
-    goal.goal.sentence = text_to_say
-    # node.publish_msg_on_topic("/rico_says/goal", prepare_string_msg(text_to_say))
-    node.publish_msg_on_topic("/rico_says/goal", goal)
+def task_completed_behaviour(node, message):
+    robot_say_sth(node, message)
+    if go_to_position(node, "default"):
+        return -1
+    return 0
+
+
+def robot_say_sth(node, text_to_say):
+    node.publish_msg_on_topic("/rico_says/goal", prepare_sentence_action_goal(text_to_say))
     return 0
 
 
 def wait_for_item_placed(node, item):
-    say_sth(node, "Dej przedmiot")
+    if item == "tea":
+        pl_item = "herbatę"
+    elif item == "empty dish":
+        pl_item = "puste naczynie"
+    else:
+        pl_item = "coś do przewiezienia"
+
+    debug(DBGLevel.INFO, "I wait for " + item + " to be placed")
+    robot_say_sth(node, "Podaj proszę " + pl_item)
+
     # TODO check weight and item type
     while 1:
         if g_item_placed_status:
             if g_item_location == "Center of table" or g_item_location == "Side of table":
+                debug(DBGLevel.INFO, "Item " + item + " has been placed")
                 return 0
             elif g_item_location == "Edge of table":
-                debug(DBGLevel.WARN, "Item placed on edge")
-                say_sth(node, "Proszę popraw położenie przedmiotu")
+                debug(DBGLevel.WARN,
+                      "Item " + item + " has been placed on the edge of the table - correct its position")
+                robot_say_sth(node, "Proszę popraw położenie przedmiotu")
                 time.sleep(5)
                 continue
             else:
-                pass
+                debug(DBGLevel.ERROR, "Item " + item + " couldn't be placed od the table")
+                robot_say_sth(node, "Przedmiot nie został położony na stoliku")
+                return 1
         time.sleep(1)
 
 
 def wait_for_item_taken(node, item):
-    say_sth(node, "Weź przedmiot")
+    if item == "tea":
+        pl_item = "herbatę"
+    elif item == "empty dish":
+        pl_item = "puste naczynie"
+    else:
+        pl_item = "coś do przewiezienia"
+
+    debug(DBGLevel.INFO, "I wait for " + item + " to be taken")
+    robot_say_sth(node, "Odbierz proszę " + pl_item)
+
     while 1:
         if g_item_placed_status is False:
+            debug(DBGLevel.INFO, "Item " + item + " has been taken")
             return 0
         time.sleep(1)
 
 
 def handle_give_tea_command(node):
     # Go to kitchen
-    debug(DBGLevel.INFO, "I go to the kitchen")
     if go_to_position(node, "kitchen") != 0:
-        debug(DBGLevel.CRITICAL, "Cannot drive to kitchen")
-        say_sth(node, "Dupa")
         return -1
 
     # Get mug of tea
-    # debug(DBGLevel.INFO, "I wait for fullmug to be placed")
-    # if not wait_for_item_placed(node, "fullmug"):
-    #     debug(DBGLevel.CRITICAL, "Cannot get item fullmug")
-    #     say_sth(node, "Alohomora")
-    #     return -1
+    if wait_for_item_placed(node, "tea") != 0:
+        return -1
 
     # Go to task giver
-    debug(DBGLevel.INFO, "I go to the table")
     if go_to_position(node, "table") != 0:
-        debug(DBGLevel.CRITICAL, "Cannot drive to table")
-        say_sth(node, "Dupa")
         return -1
 
     # Acknowledge tea take off
-    # debug(DBGLevel.INFO, "I wait for fullmug to be taken")
-    # if not wait_for_item_taken(node, "fullmug"):
-    #     debug(DBGLevel.CRITICAL, "Cannot get rid of item fullmug")
-    #     say_sth(node, "Alohomora")
-    #     return -1
+    if wait_for_item_taken(node, "tea") != 0:
+        return -1
+
+    # End task
+    if task_completed_behaviour(node, "Herbata została dostarczona") != 0:
+        return -1
     return 0
 
 
 def handle_drop_mug_command(node):
     # Take mug from task giver
-    # debug(DBGLevel.INFO, "I wait for emptymug to be placed")
-    # if not wait_for_item_placed(node, "emptymug"):
-    #     debug(DBGLevel.CRITICAL, "Cannot get item emptymug")
-    #     say_sth(node, "Nie")
-    #     return -1
+    if not wait_for_item_placed(node, "empty dish"):
+        return -1
 
     # Go to kitchen
-    debug(DBGLevel.INFO, "I go to the kitchen")
     if go_to_position(node, "kitchen") != 0:
-        debug(DBGLevel.CRITICAL, "Cannot drive to kitchen")
-        say_sth(node, "Hahaha")
         return -1
 
     # Acknowledge mug take off
-    # debug(DBGLevel.INFO, "I wait for emptymug to be taken")
-    # if not wait_for_item_taken(node, "emptymug"):
-    #     debug(DBGLevel.CRITICAL, "Cannot get rid of item emptymug")
-    #     say_sth(node, "Nie")
-    #     return -1
+    if not wait_for_item_taken(node, "empty dish"):
+        return -1
+
+    # End task
+    if task_completed_behaviour(node, "Naczynie zostało odwiezione") != 0:
+        return -1
     return 0
 
 
@@ -286,9 +309,11 @@ if __name__ == "__main__":
             if g_command != "":
                 debug(DBGLevel.DETAILS, g_command)
 
-            if g_command == "Przywieź mi herbatę" or g_command == "Przywieź mi herbatę." or g_command == "Przywieź mi herbatę!":
+            if g_command == "Przywieź mi herbatę" or g_command == "Przywieź mi herbatę." \
+                    or g_command == "Przywieź mi herbatę!":
                 handle_give_tea_command(usage_node)
-            elif g_command == "Odwieź kubek do kuchni":
+            elif g_command == "Odwieź kubek do kuchni" or g_command == "Odwieź kubek do kuchni." \
+                    or g_command == "Odwieź kubek do kuchni!":
                 handle_drop_mug_command(usage_node)
             else:
                 debug(DBGLevel.WARN, g_command)

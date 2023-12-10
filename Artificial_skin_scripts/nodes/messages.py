@@ -4,6 +4,7 @@ import ros_numpy
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Header, Int32
 from geometry_msgs.msg import PoseStamped
+from tiago_msgs.msg import SaySentenceActionGoal
 
 from debug.debug import *
 
@@ -54,4 +55,11 @@ def prepare_pose_stamped_msg(frame_id="map", pos_x=0.0, pos_y=0.0, pos_z=0.0, ro
         msg.pose.orientation.y = rot_y
         msg.pose.orientation.z = rot_z
         msg.pose.orientation.w = rot_w
+        return msg
+
+
+def prepare_sentence_action_goal(string):
+    if type(string) is str:
+        msg = SaySentenceActionGoal()
+        msg.goal.sentence = string
         return msg
