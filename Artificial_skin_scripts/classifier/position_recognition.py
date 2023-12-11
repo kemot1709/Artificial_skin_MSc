@@ -198,8 +198,11 @@ def find_sides_of_table(mask_image):
     side_edges = np.argwhere(np.diff(np.r_[0, last_col, 0])).reshape(-1, 2)
     if len(side_edges) > 1:
         debug(DBGLevel.WARN, "Table have some border inconsistency")
-    # TODO Check it and make sides bigger
     edge = side_edges[0]
+    edge[1] -= 1
+
+    # Bigger it up a little
+    edge[0] += 1
     edge[1] -= 1
     return edge
 
