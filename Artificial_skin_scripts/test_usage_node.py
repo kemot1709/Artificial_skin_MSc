@@ -160,7 +160,7 @@ def go_to_position(node, position):
     if position == "kitchen":
         goal = get_pose_kitchen()
         pl_position = "kuchni"
-    elif position == "stolik":
+    elif position == "table":
         pl_position = "stolika"
         goal = get_pose_table()
     elif position == "dock":
