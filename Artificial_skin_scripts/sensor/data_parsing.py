@@ -57,7 +57,7 @@ def mask_np_image(np_image, mask):
 
 
 def compensate_raw_image(rows, columns, image_to_compensate, calibration_image,
-                         compensation_method=ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_B):
+                         compensation_method=ImageCompensationMethod.input_scaled_to_calibration_value_reduced_by_A):
     compensated_image = [[0 for x in range(columns)] for y in range(rows)]
 
     if compensation_method == ImageCompensationMethod.input_shifted_by_max_value:

@@ -52,17 +52,17 @@ def get_distance_to_mask(image_mask, point):
     point[1] += 1
 
     distances = np.round(
-            np.sqrt(
-                    (np.where(e_image_mask == 0)[1] - point[0]) ** 2 + (
-                            np.where(e_image_mask == 0)[0] - point[1]) ** 2), 2)
+        np.sqrt(
+            (np.where(e_image_mask == 0)[1] - point[0]) ** 2 + (
+                    np.where(e_image_mask == 0)[0] - point[1]) ** 2), 2)
     return np.min(distances)
 
 
 def get_histogram_of_weight_from_point(image, point):
     # Calculate the distances from each white pixel to the centroid on the original image
     distances = np.uint8(np.round(np.sqrt(
-            (np.where(image > 0)[1] - point[0]) ** 2 + (
-                    np.where(image > 0)[0] - point[1]) ** 2)))
+        (np.where(image > 0)[1] - point[0]) ** 2 + (
+                np.where(image > 0)[0] - point[1]) ** 2)))
 
     # Collect intensity values of the original image at corresponding distances
     intensity_values = np.uint32(image[image > 0])
@@ -112,7 +112,6 @@ def sum_image_values_on_mask(image, mask_image):
 
 
 # TODO global counter where this function makes return
-# TODO works fucking badly but at least it is sth
 def check_item_on_edge(image, mask):
     image = np.uint8(image)
     max_image_val = np.max(image)
@@ -121,18 +120,20 @@ def check_item_on_edge(image, mask):
 
     # Max val is on border or next to border
     idx_max_val = np.unravel_index(np.argmax(e_image), e_image.shape)
-    if mask.e_bordered_mask[idx_max_val] == 0 or mask.e_2bordered_mask[idx_max_val] == 0:
+    if mask.e_bordered_mask[idx_max_val] == 0:
+        # Using only the closest tactile, when using 2 detection can be as far as 5cm from edge
         return True
 
     # Whole item inside of table
-    potentially_on_edge = False
-    for i in range(1, e_image_shape[0] - 1):
-        for j in range(1, e_image_shape[1] - 1):
-            if mask.e_bordered_mask[i, j] == 0 and e_image[i, j] > max_image_val / 10.0 and e_image[i, j] > 5:
-                # Bordered mask must be used, because normal mask is used to trimming image
-                potentially_on_edge = True
-    if not potentially_on_edge:
-        return False
+    # section not includes enough confidence and it works better withoit it
+    # potentially_on_edge = False
+    # for i in range(1, e_image_shape[0] - 1):
+    #     for j in range(1, e_image_shape[1] - 1):
+    #         if mask.e_bordered_mask[i, j] == 0 and e_image[i, j] > max_image_val / 10.0 and e_image[i, j] > 5:
+    #             # Bordered mask must be used, because normal mask is used to trimming image
+    #             potentially_on_edge = True
+    # if not potentially_on_edge:
+    #     return False
 
     # Check by finding centroid and distance to border
     s_image = stretch_image(image, 1.5, 2.5)
@@ -141,10 +142,16 @@ def check_item_on_edge(image, mask):
     peak = find_histogram_peak(hist, False)
     dist_to_border = get_distance_to_mask(mask.getStretchedMask(), s_centroid_point)
 
-    # TODO rozległy histogram - duży przedmiot - musi być przy krawędzi
+    # TODO whin histogram is wide it might mean that item is big and anyway will be close to the edge
+    # filter out such items as in the center
 
     # Object close to border
-    if dist_to_border <= peak + 2.0 or dist_to_border < 3.0:
+    if dist_to_border < 5.0:
+        return True
+
+    # Edge of item is close to border
+    # Peak is roughly diameter of object
+    if dist_to_border <= peak + 2.0:
         return True
 
     # Check weight on close to border fields and compare to all weight
@@ -191,20 +198,24 @@ def find_sides_of_table(mask_image):
     side_edges = np.argwhere(np.diff(np.r_[0, last_col, 0])).reshape(-1, 2)
     if len(side_edges) > 1:
         debug(DBGLevel.WARN, "Table have some border inconsistency")
-
     edge = side_edges[0]
+    edge[1] -= 1
+
+    # Bigger it up a little
+    edge[0] += 1
     edge[1] -= 1
     return edge
 
 
 def recognise_position(image, image_mask, field_size):
+    # field size = [1.5, 2.5]
     mask = ImageMask()
 
     # Prepare useful data and prepare images
-    s_image = stretch_image(image, field_size[0], field_size[1])  # field size = [1.5, 2.5]
+    s_image = stretch_image(image, field_size[0], field_size[1])  # Image stretched to real dimentions in cm
     # s_image_mask = stretch_image(image_mask, field_size[0], field_size[1])
-    s_image_mask = mask.getStretchedMask()
-    s_side_edges = find_sides_of_table(s_image_mask)
+    s_image_mask = mask.getStretchedMask()  # Image mask stretched to real dimentions in cm
+    s_side_edges = find_sides_of_table(s_image_mask)  # Find right and left side of the table
 
     # Position recognition
     is_border = check_item_on_edge(image, mask)
@@ -213,11 +224,11 @@ def recognise_position(image, image_mask, field_size):
     peak = find_histogram_peak(hist)
 
     # Return result
-    if not is_border:
+    if is_border:
+        return ItemPlacement.edge
+    else:
         if s_centroid_point[1] < s_side_edges[0] or s_centroid_point[1] > s_side_edges[1]:
             return ItemPlacement.side
         else:
             return ItemPlacement.center
-
-    return ItemPlacement.edge
     # return ItemPlacement.unknown

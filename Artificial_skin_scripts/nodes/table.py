@@ -178,31 +178,49 @@ class TableNode(Node):
             else:
                 self.actual_item.type = ItemType.unknown
 
+    def check_node_work_properly(self):
+        # Check status of connection
+        if self.sensor.get_usb_connected() is False:
+            self.node_status = TableStatus.crashed_connection
+            return False
+
+        # Connection has been resetted (have to be after connection check)
+        if self.node_status == TableStatus.crashed_connection:
+            self.node_status = TableStatus.table_off
+            return False
+
+        # Node is turned off by user
+        if self.on_flag is False:
+            self.node_status = TableStatus.table_off
+            return False
+
+        return True
+
     def run(self):
+        i = 0
         while not self.exitFlag:
             time.sleep(0.01)
 
-            # Check status of connections and subsystems
-            if self.sensor.get_usb_connected():
-                if self.node_status == TableStatus.crashed_connection:
-                    self.node_status = TableStatus.table_off
-            else:
-                self.node_status = TableStatus.crashed_connection
+            if self.check_node_work_properly():
+                # Check for new image and handle it
+                if self.new_image_flag:
+                    if self.calibrate_flag:
+                        self.sensor.calibrate_sensor(self.sensor.image_actual)
+                    self.exstract_image_from_sensor_data()
+                    self.make_recognition_of_image()
 
-            # Check for new image and handle it
-            if self.on_flag and self.new_image_flag:
-                if self.calibrate_flag:
-                    self.sensor.calibrate_sensor(self.sensor.image_actual)
-                self.exstract_image_from_sensor_data()
-                self.make_recognition_of_image()
+                    #####
+                    self.publish_image(self.sensor.image_actual)
+                    self.publish_is_placed(self.is_item_placed())
+                    self.publish_predicted_item(self.get_predicted_item())
+                    self.publish_location(self.get_predicted_location())
+                    self.publish_weight(self.get_predicted_weight())
+                    #####
 
-                #####
-                self.publish_image(self.sensor.image_actual)
-                self.publish_is_placed(self.is_item_placed())
-                self.publish_predicted_item(self.get_predicted_item())
-                self.publish_location(self.get_predicted_location())
+                    self.new_image_flag = False
+
+            # TODO Make it simpler and better (slow down publishing status msgs)
+            i += 1
+            if i == 10:
                 self.publish_status(self.get_node_status())
-                self.publish_weight(self.get_predicted_weight())
-                #####
-
-                self.new_image_flag = False
+                i = 0
