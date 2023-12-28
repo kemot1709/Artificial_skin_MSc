@@ -39,17 +39,18 @@ class Classifier:
         predictions = self.model.predict(images)
         return predictions
 
-    def predict_items_with_confidence(self, images, confidence_treshold):
+    def predict_items_with_confidence(self, images, confidence_treshold, map_of_types):
         try:
             # For every image returns one most probable item, if probability value is greater than treshold
             predictions = self.model.predict(images)
             item_predictions = []
             for prediction in predictions:
-                if any(val > confidence_treshold for val in prediction):
-                    item_predictions.append(np.argmax(prediction))
+                max_val = np.argmax(prediction)
+                if prediction[max_val] > confidence_treshold:
+                    item_predictions.append(ItemType(map_of_types[max_val]))
                 else:
                     item_predictions.append(ItemType.unknown)
-            return np.ndarray(item_predictions)
+            return item_predictions
         except:
             debug(DBGLevel.ERROR, "Item prediction failed")
             return [[ItemType.unknown]]
