@@ -36,13 +36,13 @@ class Classifier:
 
     def predict(self, images):
         # For every image returns array of probabilities for that item
-        predictions = self.model.predict(images)
+        predictions = self.model.predict(images, verbose=0)
         return predictions
 
     def predict_items_with_confidence(self, images, confidence_treshold, map_of_types):
         try:
             # For every image returns one most probable item, if probability value is greater than treshold
-            predictions = self.model.predict(images)
+            predictions = self.model.predict(images, verbose=0)
             item_predictions = []
             for prediction in predictions:
                 max_val = np.argmax(prediction)
