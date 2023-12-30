@@ -1,4 +1,6 @@
 import os
+import numpy as np
+
 from item.item import Item
 
 
@@ -57,3 +59,36 @@ def ommitCorruptedItems(all_items):
             good_items.append(item)
 
     return good_items
+
+
+def rotate_item(item, angle=0):
+    if angle == 90:
+        k = 1
+    elif angle == 180:
+        k = 2
+    elif angle == 270:
+        k = 3
+    else:
+        return item
+
+    item.image = np.rot90(item.image, k=k)
+    item.image_calibration = np.rot90(item.image_calibration, k=k)
+    item.image_mask = np.rot90(item.image_mask, k=k)
+    item.image_extracted = np.rot90(item.image_extracted, k=k)
+    # TODO extracted raw
+    return item
+
+
+def flip_item(item, plane="h"):
+    if plane == "h":
+        item.image = np.fliplr(item.image)
+        item.image_calibration = np.fliplr(item.image_calibration)
+        item.image_mask = np.fliplr(item.image_mask)
+        item.image_extracted = np.fliplr(item.image_extracted)
+    if plane == "v":
+        item.image = np.flipud(item.image)
+        item.image_calibration = np.flipud(item.image_calibration)
+        item.image_mask = np.flipud(item.image_mask)
+        item.image_extracted = np.flipud(item.image_extracted)
+    # TODO extracted raw
+    return item
