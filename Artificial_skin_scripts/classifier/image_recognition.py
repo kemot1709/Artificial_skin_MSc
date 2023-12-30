@@ -67,7 +67,7 @@ class Classifier:
     def import_model(self, filename):
         filename = os.path.splitext(filename)[0]
         self.model = load_model(filename + ".keras")
-        self.model.summary()
+        # self.model.summary()
         with open(str(filename + ".names"), 'rb') as pickle_file:
             self.output_types = pickle.load(pickle_file)
         self.trained = True

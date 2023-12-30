@@ -100,7 +100,7 @@ y_test = parser.parseLabelsToArray(testSet)
 
 classifier = Classifier()
 ##############################
-# classifier.import_model("classifier/models/test_model_s.keras")
+# classifier.import_model("classifier/models/test_model.keras")
 ###############
 classifier.set_model(Classifier.get_default_model(y_train.shape[1]),
                      parser.parseOrdinalNumbersToItemTypes(list(range(0, y_train.shape[1]))))
@@ -126,4 +126,4 @@ print(testSet[5].type)
 print(itemTranslationDict[elo_[0]])
 
 # Export model
-classifier.export_model("classifier/models/test_model.keras")
+# classifier.export_model("classifier/models/test_model.keras")
