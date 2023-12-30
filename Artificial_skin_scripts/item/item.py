@@ -242,7 +242,13 @@ class Item:
                 for j in range(16):
                     if extracted[i][j] < 0 or self.image_mask[i][j] == 0:
                         extracted[i][j] = 0
-            self.image_extracted = np.array(extracted)
+        else:
+            extracted = self.image_extracted
+            for i in range(16):
+                for j in range(16):
+                    if extracted[i][j] < 0:
+                        extracted[i][j] = 0
+        self.image_extracted = np.array(extracted)
 
     def getExtractedImage(self):
         return self.image_extracted
