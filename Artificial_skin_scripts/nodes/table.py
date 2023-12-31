@@ -1,5 +1,6 @@
 import rospy
 import time
+import numpy as np
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool, String, Int32
 
@@ -139,7 +140,7 @@ class TableNode(Node):
 
     def get_predicted_item(self):
         if self.actual_item.type is not ItemType.none:
-            return self.translation.itemTranslationDict[self.actual_item.type[0]]
+            return self.translation.itemTranslationDict[self.actual_item.type]
         else:
             return self.translation.itemTranslationDict[ItemType.none]
 
@@ -172,8 +173,8 @@ class TableNode(Node):
             self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
 
             if self.item_classifier is not None:
-                prediction = self.item_classifier.predict_items_with_confidence(self.actual_item.getExtractedImage(),
-                                                                                0.8)
+                prediction = self.item_classifier.predict_items_with_confidence(
+                    np.array([self.actual_item.getExtractedImage()]), 0.8, self.item_classifier.output_types)
                 self.actual_item.type = prediction[0]
             else:
                 self.actual_item.type = ItemType.unknown

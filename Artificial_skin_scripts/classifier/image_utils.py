@@ -57,7 +57,8 @@ class ImageParser:
     def parseImagesToArray(self, itemlist):
         imageList = []
         for item in itemlist:
-            imageList.append(np.array(item.image))  # - np.array(item.image_calibration))
+            # imageList.append(np.array(item.image))  # - np.array(item.image_calibration))
+            imageList.append(np.array(item.image_extracted))
         imageList = np.array(imageList)
         return imageList
 
