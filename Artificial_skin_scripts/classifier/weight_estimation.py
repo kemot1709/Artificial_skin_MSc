@@ -1,3 +1,8 @@
+from keras.models import Sequential, load_model
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout, ZeroPadding2D, ReLU, \
+    DepthwiseConv2D, Lambda
+from keras.optimizers import Adam
+
 HYPERBOLE_A = 35108.0
 HYPERBOLE_X0 = 0.0
 HYPERBOLE_Y = 0.42
@@ -25,3 +30,41 @@ def estimate_weight(raw_calibrated_image, max_value=4095):
 
     weight = weight * WEIGHT_MULTIPLIER
     return weight
+
+
+def get_default_weight_estimation_model():
+    model = Sequential()
+
+    model.add(Conv2D(16, (3, 3), input_shape=(16, 16, 1), padding="same", strides=1))
+    model.add(BatchNormalization())
+    model.add(ReLU())
+    model.add(MaxPooling2D((2, 2), padding="same", strides=1))
+
+    model.add(DepthwiseConv2D((3, 3), padding="same", strides=1))
+    model.add(BatchNormalization())
+    model.add(ReLU())
+
+    model.add(Conv2D(32, (3, 3), padding="same", strides=1))
+    model.add(BatchNormalization())
+    model.add(ReLU())
+    model.add(MaxPooling2D((2, 2)))
+
+    model.add(Conv2D(64, (3, 3)))
+    model.add(BatchNormalization())
+    model.add(ReLU())
+
+    model.add(Conv2D(128, (3, 3)))
+    model.add(BatchNormalization())
+    model.add(ReLU())
+
+    model.add(Flatten())
+    model.add(Dense(100, activation='relu'))
+    model.add(Dense(1, activation='linear'))
+    # model.add(Lambda(lambda x: tf.cast(tf.round(x), dtype=tf.int32)))
+
+    # Compile the model
+    model.compile(optimizer=Adam(learning_rate=0.01), loss='mean_squared_error')
+    # model.compile(optimizer=Adam(learning_rate=0.01), loss='mean_absolute_percentage_error')
+    # model.summary()
+
+    return model

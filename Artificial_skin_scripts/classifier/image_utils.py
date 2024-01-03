@@ -74,6 +74,13 @@ class ImageParser:
         labelList = np.array(labelList)
         return labelList
 
+    def parseWeightsToArray(self, itemlist):
+        weightList = []
+        for item in itemlist:
+            weightList.append(item.weight)
+
+        return np.array(weightList)
+
     def parseOrdinalNumbersToNames(self, list):
         return self.map.mapOrdinalNumbersToLabelNames(list)
 
