@@ -32,6 +32,11 @@ def estimate_weight(raw_calibrated_image, max_value=4095):
     return weight
 
 
+def estimate_weight_with_model(model, images):
+    weight = model.predict(images, verbose=0)
+    return weight
+
+
 def get_default_weight_estimation_model():
     model = Sequential()
 

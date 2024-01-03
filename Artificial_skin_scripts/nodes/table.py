@@ -14,7 +14,8 @@ from sensor.params import ImageMask
 from sensor.data_parsing import flatten
 from item.item import Item, ItemPlacement, ItemType
 from classifier.position_recognition import recognise_position
-from classifier.weight_estimation import estimate_weight
+from classifier.weight_estimation import estimate_weight, get_default_weight_estimation_model, \
+    estimate_weight_with_model
 from classifier.image_recognition import Classifier
 from debug.debug import *
 
@@ -38,6 +39,8 @@ class TableNode(Node):
 
     item_classifier = None
     classifier_model_path = None
+    weight_model = None
+    weight_estimated = 0
 
     def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras",
                  topic_prefix="/table"):
@@ -61,6 +64,8 @@ class TableNode(Node):
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/weight", Int32)
         published_topics.append(ret)
+        ret = Topic(topic_prefix + "/weight_model", Int32)
+        published_topics.append(ret)
         ret = Topic(topic_prefix + "/predicted_item", String)
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/location", String)
@@ -70,6 +75,7 @@ class TableNode(Node):
         self.classifier_model_path = model_path
         self.item_classifier = Classifier()
         self.item_classifier.import_model(self.classifier_model_path)
+        self.weight_model = get_default_weight_estimation_model()
 
         # Run node
         self.topic_prefix = topic_prefix
@@ -124,6 +130,7 @@ class TableNode(Node):
 
     def publish_weight(self, int32):
         self.publish_msg_on_topic(self.topic_prefix + "/weight", prepare_int32_msg(int32))
+        self.publish_msg_on_topic(self.topic_prefix + "/weight_model", prepare_int32_msg(self.weight_estimated))
 
     def publish_image(self, image):
         self.publish_msg_on_topic(self.topic_prefix + "/raw_image", prepare_image_msg("Intelligent table node", image))
@@ -171,10 +178,13 @@ class TableNode(Node):
                                                             [1.5, 2.5])
 
             self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
+            self.weight_estimated = estimate_weight_with_model(self.weight_model,
+                                                               np.array([self.actual_item.getExtractedImage()]))
+            self.weight_estimated = self.weight_estimated[0]
 
             if self.item_classifier is not None:
                 prediction = self.item_classifier.predict_items_with_confidence(
-                    np.array([self.actual_item.getExtractedImage()]), 0.8, self.item_classifier.output_types)
+                        np.array([self.actual_item.getExtractedImage()]), 0.75, self.item_classifier.output_types)
                 self.actual_item.type = prediction[0]
             else:
                 self.actual_item.type = ItemType.unknown
