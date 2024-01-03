@@ -6,6 +6,7 @@ from std_msgs.msg import Bool, String, Int32
 
 from PyQt5 import QtCore
 from enum import Enum
+from keras.models import load_model
 
 from nodes.messages import prepare_bool_msg, prepare_image_msg, prepare_string_msg, prepare_int32_msg
 from nodes.node_core import NodeStatus, Topic, Node
@@ -39,11 +40,16 @@ class TableNode(Node):
 
     item_classifier = None
     classifier_model_path = None
-    weight_model = None
-    weight_estimated = 0
 
+    weight_calculation_mode = None
+    weight_model_path = None
+    weight_model = None
+    weight_estimated = 0  # TODO DEL i wszystkie wspomnienia
+
+    # weight_calculation: "internal", "neuron"
     def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras",
-                 topic_prefix="/table"):
+                 topic_prefix="/table", weight_calculation_mode="internal",
+                 weight_calculation_model_path="classifier/models/weight_model.keras"):
         # Set status
         self.node_status = TableStatus.initializing
 
@@ -64,7 +70,7 @@ class TableNode(Node):
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/weight", Int32)
         published_topics.append(ret)
-        ret = Topic(topic_prefix + "/weight_model", Int32)
+        ret = Topic(topic_prefix + "/weight_model", Int32)  # TODO DEL and everything else with it
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/predicted_item", String)
         published_topics.append(ret)
@@ -75,7 +81,14 @@ class TableNode(Node):
         self.classifier_model_path = model_path
         self.item_classifier = Classifier()
         self.item_classifier.import_model(self.classifier_model_path)
-        self.weight_model = get_default_weight_estimation_model()
+
+        # Item weight variants #TODO DEL
+        # if weight_calculation_mode == "neuron":
+        #     self.weight_calculation_mode = weight_calculation_mode
+        #     self.weight_model_path = weight_calculation_model_path
+        self.weight_model = load_model(weight_calculation_model_path)
+        # else:
+        self.weight_calculation_mode = "internal"
 
         # Run node
         self.topic_prefix = topic_prefix
@@ -170,6 +183,7 @@ class TableNode(Node):
         self.actual_item.image_extracted_raw = self.sensor.image_actual_calibrated_raw
         self.actual_item.setExtractedImage()
         self.actual_item.id = self.item_cnt
+        self.weight_estimated = 0  # TODO DEL
         self.item_cnt += 1
 
     def make_recognition_of_image(self):
@@ -177,14 +191,18 @@ class TableNode(Node):
             self.actual_item.placement = recognise_position(self.actual_item.getExtractedImage(), self.mask.getMask(),
                                                             [1.5, 2.5])
 
-            self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
-            self.weight_estimated = estimate_weight_with_model(self.weight_model,
-                                                               np.array([self.actual_item.getExtractedImage()]))
-            self.weight_estimated = self.weight_estimated[0]
+            if self.weight_calculation_mode == "internal":
+                self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
+                # elif self.weight_calculation_mode == "neuron":    # TODO DEL and change this lines under
+                self.weight_estimated = estimate_weight_with_model(self.weight_model,
+                                                                   np.array([self.actual_item.getExtractedImage()]))
+                self.weight_estimated = int(self.weight_estimated[0])
+            else:
+                self.actual_item.weight = 0
 
             if self.item_classifier is not None:
                 prediction = self.item_classifier.predict_items_with_confidence(
-                        np.array([self.actual_item.getExtractedImage()]), 0.75, self.item_classifier.output_types)
+                    np.array([self.actual_item.getExtractedImage()]), 0.75, self.item_classifier.output_types)
                 self.actual_item.type = prediction[0]
             else:
                 self.actual_item.type = ItemType.unknown
