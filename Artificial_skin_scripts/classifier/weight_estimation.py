@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-from keras.models import Sequential, load_model
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout, ZeroPadding2D, ReLU, \
-    DepthwiseConv2D, Lambda
+from keras.models import Sequential
+from keras.layers import Conv2D, Flatten, Dense, BatchNormalization, ReLU, AveragePooling2D
 from keras.optimizers import Adam
 
 HYPERBOLE_A = 35108.0
@@ -51,22 +50,13 @@ def get_default_weight_estimation_model():
     model.add(Conv2D(16, (3, 3), input_shape=(16, 16, 1), padding="same", strides=1))
     model.add(BatchNormalization())
     model.add(ReLU())
-    model.add(MaxPooling2D((2, 2), padding="same", strides=1))
+    model.add(AveragePooling2D((2, 2)))
 
-    model.add(DepthwiseConv2D((3, 3), padding="same", strides=1))
+    model.add(Conv2D(32, (3, 3)))
     model.add(BatchNormalization())
     model.add(ReLU())
-
-    model.add(Conv2D(32, (3, 3), padding="same", strides=1))
-    model.add(BatchNormalization())
-    model.add(ReLU())
-    model.add(MaxPooling2D((2, 2)))
 
     model.add(Conv2D(64, (3, 3)))
-    model.add(BatchNormalization())
-    model.add(ReLU())
-
-    model.add(Conv2D(128, (3, 3)))
     model.add(BatchNormalization())
     model.add(ReLU())
 
@@ -75,7 +65,7 @@ def get_default_weight_estimation_model():
     model.add(Dense(1, activation='linear'))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.01), loss=mean_absolute_percentage_square_error)
+    model.compile(optimizer=Adam(learning_rate=0.001), loss=mean_absolute_percentage_square_error)
     # model.summary()
 
     return model
