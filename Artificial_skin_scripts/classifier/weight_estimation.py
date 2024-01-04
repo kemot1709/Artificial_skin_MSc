@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 from keras.models import Sequential, load_model
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization, Dropout, ZeroPadding2D, ReLU, \
     DepthwiseConv2D, Lambda
@@ -37,6 +39,12 @@ def estimate_weight_with_model(model, images):
     return weight
 
 
+def mean_absolute_percentage_square_error(y_true, y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    loss = tf.reduce_mean(tf.square(100 * (y_true - y_pred) / y_true))
+    return loss
+
+
 def get_default_weight_estimation_model():
     model = Sequential()
 
@@ -65,11 +73,9 @@ def get_default_weight_estimation_model():
     model.add(Flatten())
     model.add(Dense(100, activation='relu'))
     model.add(Dense(1, activation='linear'))
-    # model.add(Lambda(lambda x: tf.cast(tf.round(x), dtype=tf.int32)))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.01), loss='mean_squared_error')
-    # model.compile(optimizer=Adam(learning_rate=0.01), loss='mean_absolute_percentage_error')
+    model.compile(optimizer=Adam(learning_rate=0.01), loss=mean_absolute_percentage_square_error)
     # model.summary()
 
     return model
