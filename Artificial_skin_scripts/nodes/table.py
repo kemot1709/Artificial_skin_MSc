@@ -16,7 +16,7 @@ from sensor.data_parsing import flatten
 from item.item import Item, ItemPlacement, ItemType
 from classifier.position_recognition import recognise_position
 from classifier.weight_estimation import estimate_weight, get_default_weight_estimation_model, \
-    estimate_weight_with_model
+    estimate_weight_with_model, mean_absolute_percentage_square_error
 from classifier.image_recognition import Classifier
 from debug.debug import *
 
@@ -86,7 +86,8 @@ class TableNode(Node):
         # if weight_calculation_mode == "neuron":
         #     self.weight_calculation_mode = weight_calculation_mode
         #     self.weight_model_path = weight_calculation_model_path
-        self.weight_model = load_model(weight_calculation_model_path)
+        self.weight_model = load_model(weight_calculation_model_path, custom_objects={
+            'mean_absolute_percentage_square_error': mean_absolute_percentage_square_error})
         # else:
         self.weight_calculation_mode = "internal"
 
