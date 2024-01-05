@@ -6,8 +6,9 @@ from keras.models import load_model
 
 from item.item_utils import loadItems, selectDesiredItems, selectDesiredPlacement
 from item.item import ItemType, ItemPlacement
-from classifier.image_utils import ImageParser, splitDataToTraining
-from classifier.weight_estimation import get_default_weight_estimation_model
+from classifier.image_utils import ImageParser, splitDataToTraining, plot_learning_curve
+from classifier.weight_estimation import get_default_weight_estimation_model, estimate_weight_with_model, \
+    mean_absolute_percentage_square_error
 from sensor.params import ImageMask
 from sensor.data_parsing import flatten
 from classifier.position_recognition import check_item_on_edge
@@ -47,9 +48,10 @@ x_test = parser.parseImagesToArray(testSet)
 y_test = parser.parseWeightsToArray(testSet)
 
 ##############################
-model = load_model(model_path)
+model = load_model(model_path,
+                   custom_objects={'mean_absolute_percentage_square_error': mean_absolute_percentage_square_error})
 ###############
-# model.fit(x_train, y_train, batch_size=16, epochs=100, validation_data=(x_val, y_val))
+# history = model.fit(x_train, y_train, batch_size=16, epochs=50, validation_data=(x_val, y_val))
 ##############################
 
 # Evaluate used model
@@ -58,19 +60,23 @@ y_diff = y_pred - y_test
 y_diff_a = np.abs(y_diff)
 y_diff_rel = np.round((y_diff / y_test) * 100, 2)
 y_diff_arel = np.abs(y_diff_rel)
-print("Max: " + str(max(y_diff_rel)) + "%\tMin: " + str(min(y_diff_rel)) + "%")
+y_var = model.evaluate(x_test, y_test, verbose=0)
+print("Min: " + str(min(y_diff_rel)) + "%\tMax: " + str(max(y_diff_rel)) + "%")
 print("Avg err: " + str(np.average(y_diff_a)))
 print("Avg % err: " + str(np.average(y_diff_arel)))
-print("Avg ^2 err: " + str(model.evaluate(x_test, y_test, verbose=0) / len(y_test)))
+print("Var: " + str(y_var))
+print("Stand diff: " + str(np.sqrt(y_var)))
 
-# Plot the cumulative histogram
-hist_values, bins = np.histogram(y_diff_a, bins=20, range=(0, y_diff_a.max()))
-# hist_values, bins = np.histogram(y_diff_arel, bins=20, range=(0, y_diff_arel.max()))
-plt.plot(bins[:-1], hist_values)
-# plt.xlabel('X')
-# plt.ylabel('Y')
-# plt.title('Title')
+# Plot the histogram from test
+plt.figure(figsize=(12, 6))
+plt.hist(y_diff_arel, list(range(0, 101, 4)), rwidth=0.8)
+plt.xlabel('Percentage deviation from the correct value')
+plt.ylabel('Number of samples')
+plt.title('Histogram of network learning results for object weight recognition')
 plt.show()
+
+# Plot learning curve
+# plot_learning_curve(history)
 
 # Check model for single item
 print("Predicted: " + str(model.predict(np.array([x_test[5]]), verbose=0)))
