@@ -133,23 +133,22 @@ def list_of_published_topics(topic_prefix):
 
 def get_pose_kitchen():
     # TODO positions to json or xml
-    # TODO make positions again when new map will be available
-    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=0.0, rot_z=1.0)
+    pose = prepare_pose_stamped_msg(pos_x=16.85, pos_y=8.05, rot_z=-0.54)
     return pose
 
 
 def get_pose_docker():
-    pose = prepare_pose_stamped_msg(pos_x=4.5, pos_y=6.9, rot_z=5.0)
+    pose = prepare_pose_stamped_msg(pos_x=11.28, pos_y=6.9, rot_z=-0.7)
     return pose
 
 
 def get_pose_table():
-    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=8.0, rot_z=-1.0)
+    pose = prepare_pose_stamped_msg(pos_x=9.91, pos_y=8.14, rot_z=--0.54)
     return pose
 
 
 def get_pose_default():
-    pose = prepare_pose_stamped_msg(pos_x=4.25, pos_y=6.97, rot_z=-0.1)
+    pose = prepare_pose_stamped_msg(pos_x=11.28, pos_y=6.9, rot_z=-0.68)
     return pose
 
 
@@ -310,7 +309,7 @@ if __name__ == "__main__":
                 debug(DBGLevel.DETAILS, g_command)
 
             if g_command == "Przywieź mi herbatę" or g_command == "Przywieź mi herbatę." \
-                    or g_command == "Przywieź mi herbatę!":
+                    or g_command == "Przywieź mi herbatę!" or g_command =="Bring me a cup of tea.":
                 handle_give_tea_command(usage_node)
             elif g_command == "Odwieź kubek do kuchni" or g_command == "Odwieź kubek do kuchni." \
                     or g_command == "Odwieź kubek do kuchni!":
