@@ -44,12 +44,16 @@ class TableNode(Node):
     weight_calculation_mode = None
     weight_model_path = None
     weight_model = None
-    weight_estimated = 0  # TODO DEL i wszystkie wspomnienia
 
     # weight_calculation: "internal", "neuron"
-    def __init__(self, node_name="IntelligentTable", language="en", model_path="classifier/models/test_model.keras",
-                 topic_prefix="/table", weight_calculation_mode="internal",
-                 weight_calculation_model_path="classifier/models/weight_model.keras"):
+    def __init__(self,
+                 node_name="IntelligentTable",
+                 language="en",
+                 model_path="classifier/models/classifier_model.keras",
+                 topic_prefix="/table",
+                 weight_calculation_mode="internal",
+                 weight_calculation_model_path="classifier/models/weight_model.keras"
+                 ):
         # Set status
         self.node_status = TableStatus.initializing
 
@@ -70,8 +74,6 @@ class TableNode(Node):
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/weight", Int32)
         published_topics.append(ret)
-        ret = Topic(topic_prefix + "/weight_model", Int32)  # TODO DEL and everything else with it
-        published_topics.append(ret)
         ret = Topic(topic_prefix + "/predicted_item", String)
         published_topics.append(ret)
         ret = Topic(topic_prefix + "/location", String)
@@ -82,14 +84,14 @@ class TableNode(Node):
         self.item_classifier = Classifier()
         self.item_classifier.import_model(self.classifier_model_path)
 
-        # Item weight variants #TODO DEL
-        # if weight_calculation_mode == "neuron":
-        #     self.weight_calculation_mode = weight_calculation_mode
-        #     self.weight_model_path = weight_calculation_model_path
-        self.weight_model = load_model(weight_calculation_model_path, custom_objects={
-            'mean_absolute_percentage_square_error': mean_absolute_percentage_square_error})
-        # else:
-        self.weight_calculation_mode = "internal"
+        # Item weight variants
+        if weight_calculation_mode == "neuron":
+            self.weight_calculation_mode = weight_calculation_mode
+            self.weight_model_path = weight_calculation_model_path
+            self.weight_model = load_model(weight_calculation_model_path, custom_objects={
+                'mean_absolute_percentage_square_error': mean_absolute_percentage_square_error})
+        else:
+            self.weight_calculation_mode = "internal"
 
         # Run node
         self.topic_prefix = topic_prefix
@@ -144,7 +146,6 @@ class TableNode(Node):
 
     def publish_weight(self, int32):
         self.publish_msg_on_topic(self.topic_prefix + "/weight", prepare_int32_msg(int32))
-        self.publish_msg_on_topic(self.topic_prefix + "/weight_model", prepare_int32_msg(self.weight_estimated))
 
     def publish_image(self, image):
         self.publish_msg_on_topic(self.topic_prefix + "/raw_image", prepare_image_msg("Intelligent table node", image))
@@ -184,7 +185,6 @@ class TableNode(Node):
         self.actual_item.image_extracted_raw = self.sensor.image_actual_calibrated_raw
         self.actual_item.setExtractedImage()
         self.actual_item.id = self.item_cnt
-        self.weight_estimated = 0  # TODO DEL
         self.item_cnt += 1
 
     def make_recognition_of_image(self):
@@ -194,10 +194,10 @@ class TableNode(Node):
 
             if self.weight_calculation_mode == "internal":
                 self.actual_item.weight = estimate_weight(self.actual_item.image_extracted_raw)
-                # elif self.weight_calculation_mode == "neuron":    # TODO DEL and change this lines under
-                self.weight_estimated = estimate_weight_with_model(self.weight_model,
-                                                                   np.array([self.actual_item.getExtractedImage()]))
-                self.weight_estimated = int(self.weight_estimated[0])
+            elif self.weight_calculation_mode == "neuron":
+                weight_estimated = estimate_weight_with_model(self.weight_model,
+                                                              np.array([self.actual_item.getExtractedImage()]))
+                self.actual_item.weight = int(weight_estimated[0])
             else:
                 self.actual_item.weight = 0
 
