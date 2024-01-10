@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     sensor = Sensor(args.p)
     sensor.connect_to_controller()
-    node = TableNode(weight_calculation_mode="neuron", model_path="classifier/models/test_model.keras")
+    node = TableNode(weight_calculation_mode="neuron")
     node.set_sensor(sensor)
 
     while 1:
