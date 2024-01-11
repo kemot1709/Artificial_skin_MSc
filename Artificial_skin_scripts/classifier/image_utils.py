@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import keras
 import cv2
+import matplotlib.pyplot as plt
 
 from item.item import Item, ItemType
 
@@ -74,6 +75,13 @@ class ImageParser:
         labelList = np.array(labelList)
         return labelList
 
+    def parseWeightsToArray(self, itemlist):
+        weightList = []
+        for item in itemlist:
+            weightList.append(item.weight)
+
+        return np.array(weightList)
+
     def parseOrdinalNumbersToNames(self, list):
         return self.map.mapOrdinalNumbersToLabelNames(list)
 
@@ -115,3 +123,18 @@ def stretch_image(image, stretch_x, stretch_y):
     stretched_image = cv2.resize(image, None, fx=stretch_x, fy=stretch_y, interpolation=cv2.INTER_LINEAR)
     stretched_image = np.uint8(stretched_image)
     return stretched_image
+
+
+def plot_learning_curve(history):
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    epochs = range(1, len(loss) + 1)
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(epochs, loss, 'r-', label='Training loss')
+    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()

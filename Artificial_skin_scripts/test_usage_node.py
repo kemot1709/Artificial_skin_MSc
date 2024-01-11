@@ -1,5 +1,6 @@
 import time
 import os
+import string
 
 # Suppress tensorflow noncritical warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -131,25 +132,24 @@ def list_of_published_topics(topic_prefix):
     return topics
 
 
+# TODO positions to json or xml
 def get_pose_kitchen():
-    # TODO positions to json or xml
-    # TODO make positions again when new map will be available
-    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=0.0, rot_z=1.0)
+    pose = prepare_pose_stamped_msg(pos_x=16.85, pos_y=8.05, rot_z=-0.54, rot_w=0.84)
     return pose
 
 
 def get_pose_docker():
-    pose = prepare_pose_stamped_msg(pos_x=4.5, pos_y=6.9, rot_z=5.0)
+    pose = prepare_pose_stamped_msg(pos_x=11.28, pos_y=6.9, rot_z=-0.7, rot_w=0.71)
     return pose
 
 
 def get_pose_table():
-    pose = prepare_pose_stamped_msg(pos_x=5.5, pos_y=8.0, rot_z=-1.0)
+    pose = prepare_pose_stamped_msg(pos_x=9.91, pos_y=8.14, rot_z=-0.54, rot_w=0.84)
     return pose
 
 
 def get_pose_default():
-    pose = prepare_pose_stamped_msg(pos_x=4.25, pos_y=6.97, rot_z=-0.1)
+    pose = prepare_pose_stamped_msg(pos_x=11.28, pos_y=6.9, rot_z=0.68, rot_w=0.75)
     return pose
 
 
@@ -297,6 +297,11 @@ def handle_drop_mug_command(node):
     return 0
 
 
+def ignore_punctuation_marks(sentence):
+    result = sentence.translate(str.maketrans('', '', string.punctuation))
+    return result
+
+
 if __name__ == "__main__":
     subscribed_topics = list_of_subscribed_topics()
     published_topics = list_of_published_topics('/test_usage')
@@ -308,12 +313,11 @@ if __name__ == "__main__":
             g_command_arrived = False
             if g_command != "":
                 debug(DBGLevel.DETAILS, g_command)
+            g_command = ignore_punctuation_marks(g_command)
 
-            if g_command == "Przywieź mi herbatę" or g_command == "Przywieź mi herbatę." \
-                    or g_command == "Przywieź mi herbatę!":
+            if g_command == "Przywieź mi herbatę" or g_command == "Bring me a cup of tea":
                 handle_give_tea_command(usage_node)
-            elif g_command == "Odwieź kubek do kuchni" or g_command == "Odwieź kubek do kuchni." \
-                    or g_command == "Odwieź kubek do kuchni!":
+            elif g_command == "Odwieź kubek do kuchni":
                 handle_drop_mug_command(usage_node)
             else:
                 debug(DBGLevel.WARN, g_command)

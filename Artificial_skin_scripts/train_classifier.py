@@ -116,7 +116,7 @@ print(table.to_string())
 print("Accuracy: " + str(classifier.evaluate(x_test, y_test)))
 
 # Check model for single item
-im = np.array([x_test[1]])
+im = np.array([x_test[5]])
 elo = classifier.predict(im)
 elo_ = classifier.predict_items_with_confidence(im, 0.7, classifier.output_types)
 eluwina = pd.DataFrame(elo)
