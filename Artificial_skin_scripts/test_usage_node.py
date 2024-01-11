@@ -207,6 +207,37 @@ def robot_say_sth(node, text_to_say):
     return 0
 
 
+def check_item_inside_table(node, item):
+    if g_item_location == "Center of table" or g_item_location == "Side of table":
+        debug(DBGLevel.INFO, "Item " + item + " has been placed")
+        return 0
+    elif g_item_location == "Edge of table":
+        debug(DBGLevel.WARN,
+              "Item " + item + " has been placed on the edge of the table - correct its position")
+        robot_say_sth(node, "Proszę popraw położenie przedmiotu")
+        time.sleep(10)
+        return 1
+    else:
+        debug(DBGLevel.ERROR, "Item " + item + " couldn't be placed od the table")
+        robot_say_sth(node, "Przedmiot nie został położony na stoliku")
+        return 2
+
+
+def check_item_in_weight_range(node, item):
+    if item == "tea":
+        expected_weight = 600
+    elif item == "empty dish":
+        expected_weight = 300
+    else:
+        return 0
+
+    if expected_weight * 0.6 < g_item_weight < expected_weight * 1.5:
+        return 0
+    else:
+        robot_say_sth(node, "Przedmiot ma nieprawidłową wagę, czy to jest prawidłowy przedmiot?")
+        return 1
+
+
 def wait_for_item_placed(node, item):
     if item == "tea":
         pl_item = "herbatę"
@@ -220,21 +251,13 @@ def wait_for_item_placed(node, item):
 
     # TODO check weight and item type
     while 1:
-        if g_item_placed_status:
-            if g_item_location == "Center of table" or g_item_location == "Side of table":
-                debug(DBGLevel.INFO, "Item " + item + " has been placed")
-                return 0
-            elif g_item_location == "Edge of table":
-                debug(DBGLevel.WARN,
-                      "Item " + item + " has been placed on the edge of the table - correct its position")
-                robot_say_sth(node, "Proszę popraw położenie przedmiotu")
-                time.sleep(5)
-                continue
-            else:
-                debug(DBGLevel.ERROR, "Item " + item + " couldn't be placed od the table")
-                robot_say_sth(node, "Przedmiot nie został położony na stoliku")
-                return 1
         time.sleep(1)
+        if g_item_placed_status:
+            if check_item_inside_table(node, item) != 0:
+                continue
+            if check_item_in_weight_range(node, item) != 0:
+                continue
+            return 0
 
 
 def wait_for_item_taken(node, item):
