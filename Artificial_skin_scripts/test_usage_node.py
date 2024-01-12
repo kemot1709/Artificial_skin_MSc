@@ -1,7 +1,7 @@
 import time
 import os
 import string
-
+# rosservice call /move_base/clear_costmaps "{}"
 # Suppress tensorflow noncritical warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -134,7 +134,7 @@ def list_of_published_topics(topic_prefix):
 
 # TODO positions to json or xml
 def get_pose_kitchen():
-    pose = prepare_pose_stamped_msg(pos_x=16.85, pos_y=8.05, rot_z=-0.54, rot_w=0.84)
+    pose = prepare_pose_stamped_msg(pos_x=16.85, pos_y=8.05, rot_z=-0.1, rot_w=0.0)
     return pose
 
 
@@ -225,9 +225,9 @@ def check_item_inside_table(node, item):
 
 def check_item_in_weight_range(node, item):
     if item == "tea":
-        expected_weight = 600
+        expected_weight = 800
     elif item == "empty dish":
-        expected_weight = 300
+        expected_weight = 500
     else:
         return 0
 
@@ -235,6 +235,8 @@ def check_item_in_weight_range(node, item):
         return 0
     else:
         robot_say_sth(node, "Przedmiot ma nieprawidłową wagę, czy to jest prawidłowy przedmiot?")
+        debug(DBGLevel.ERROR, "Item " + item + " have wrong weight: " + str(g_item_weight))
+        time.sleep(10)
         return 1
 
 
@@ -250,9 +252,15 @@ def wait_for_item_placed(node, item):
     robot_say_sth(node, "Podaj proszę " + pl_item)
 
     # TODO check weight and item type
+    i=0
     while 1:
         time.sleep(1)
         if g_item_placed_status:
+            # Drop first measurement
+            if i==0:
+                i=1
+                continue
+            i=0
             if check_item_inside_table(node, item) != 0:
                 continue
             if check_item_in_weight_range(node, item) != 0:
@@ -302,6 +310,10 @@ def handle_give_tea_command(node):
 
 
 def handle_drop_mug_command(node):
+    # Go to task giver
+    if go_to_position(node, "table") != 0:
+        return -1
+
     # Take mug from task giver
     if not wait_for_item_placed(node, "empty dish"):
         return -1
@@ -338,10 +350,12 @@ if __name__ == "__main__":
                 debug(DBGLevel.DETAILS, g_command)
             g_command = ignore_punctuation_marks(g_command)
 
-            if g_command == "Przywieź mi herbatę" or g_command == "Bring me a cup of tea":
-                handle_give_tea_command(usage_node)
-            elif g_command == "Odwieź kubek do kuchni":
-                handle_drop_mug_command(usage_node)
+            if g_command == "Przywieź mi herbatę" or g_command == "Bring me a cup of tea" or "tea" in g_command:
+                if handle_give_tea_command(usage_node) !=0:
+                    task_completed_behaviour(usage_node, "Zadanie przerwano")
+            elif g_command == "Odwieź kubek do kuchni" or "mug" in g_command or "kubek" in g_command:
+                if handle_drop_mug_command(usage_node) !=0:
+                    task_completed_behaviour(usage_node, "Zadanie przerwano")
             else:
                 debug(DBGLevel.WARN, g_command)
 
