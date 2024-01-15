@@ -271,6 +271,9 @@ def wait_for_item_placed(node, item):
                 continue
             if check_item_in_weight_range(node, item) != 0:
                 continue
+
+            robot_say_sth(node, "Thank you")
+            time.sleep(2)
             return 0
 
 
@@ -289,6 +292,9 @@ def wait_for_item_taken(node, item):
     while 1:
         if g_item_placed_status is False:
             debug(DBGLevel.INFO, "Item " + item + " has been taken")
+
+            robot_say_sth(node, "Thank you")
+            time.sleep(2)
             return 0
         time.sleep(1)
 
