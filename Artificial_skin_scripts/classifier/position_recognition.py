@@ -161,37 +161,6 @@ def check_item_on_edge(image, mask):
     return False
 
 
-def random_staff(image, mask, item=None):
-    image = np.uint8(image)
-    stretched_e_image = stretch_image(image, 1.5, 2.5)
-    # blur = cv2.blur(image, (3,3))
-    blur = cv2.GaussianBlur(stretched_e_image, (3, 3), 0)
-    edges = cv2.Canny(blur, 10, 40)
-
-    e_image = np.pad(edges, [(1, 1), (1, 1)], mode='constant', constant_values=0)
-    e_image_shape = list(e_image.shape)
-
-    # Find circles
-    # circles = cv2.HoughCircles(
-    #         e_image, cv2.HOUGH_GRADIENT, dp=.5, minDist=3,
-    #         param1=40, param2=2)
-    #
-    # circ = np.zeros(list(stretched_e_image.shape))
-    # circ = np.uint8(circ)
-    # if circles is not None:
-    #     circles = np.uint8(np.around(circles))
-    #     for circle in circles[0, :]:
-    #         center = (circle[0], circle[1])
-    #         radius = circle[2]
-    #         cv2.circle(circ, center, radius, 255)
-    #     return True
-    # elif item.shape is ItemShape.round and item.type is not ItemType.drug:
-    #     return False
-    # return False
-
-    return True
-
-
 def find_sides_of_table(mask_image):
     # Get last column and find first and the last '1'
     last_col = mask_image[:, -1]
