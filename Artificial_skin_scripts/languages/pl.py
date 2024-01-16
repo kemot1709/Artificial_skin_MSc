@@ -2,6 +2,7 @@ from item.item import ItemType, ItemPlacement
 from nodes.node_core import NodeStatus
 from nodes.table import TableStatus
 
+# TODO translate to pl
 itemTranslationDict = {
         ItemType.book:        "Book",
         ItemType.food_tray:   "Food tray",
@@ -46,31 +47,31 @@ nodeStatusTranslationDictionary = {
 
 usageIntelligentTableDictionary = {
         # Locations
-        "kitchen_D": "the kitchen ",
-        "table_D": "the table ",
-        "dock_D": "the docking station ",
-        "default_D": "the default position ",
-        "idk_D": "somewhere ",
+        "kitchen_D": "kuchni ",
+        "table_D": "stolika ",
+        "dock_D": "stacji dokującej ",
+        "default_D": "pozycji domyślnej ",
+        "idk_D": "chuj wie gdzie ",
 
         # Objects
-        "tea_B": "tea ",
-        "dish_B": "empty dish ",
-        "sth_B": "something ",
+        "tea_B": "herbatę ",
+        "dish_B": "puste naczynie ",
+        "sth_B": "chuj wie co ",
 
         # Informative
-        "drive": "I go to ",
-        "arrived": "I arrived to ",
-        "not_arrived": "Cannot arrive to ",
-        "not_placed": "The object was not placed on the table ",
-        "thanks": "Thank you ",
+        "drive": "Jadę do ",
+        "arrived": "Dojechałem do ",
+        "not_arrived": "Nie jestem w stanie dojechać do ",
+        "not_placed": "Przedmiot nie został położony na stoliku ",
+        "thanks": "Dziękuję ",
 
         # Requests
-        "position": "Please correct the position of the object ",
-        "weight": "The item has an incorrect weight ",
-        "give": "Could you give me ",
-        "take": "Please take ",
+        "position": "Proszę popraw położenie przedmiotu ",
+        "weight": "Przedmiot ma nieprawidłową wagę ",
+        "give": "Podaj proszę ",
+        "take": "Odbierz proszę ",
 
         # Tasks
-        "deliver_tea": "The tea has been delivered ",
-        "deliver_dish": "The dish has been delivered ",
+        "deliver_tea": "Herbata została dostarczona ",
+        "deliver_dish": "Puste naczynie zostało dostarczone ",
 }
