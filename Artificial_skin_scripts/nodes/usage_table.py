@@ -12,6 +12,7 @@ from tiago_msgs.msg import SaySentenceActionGoal
 from nodes.node_core import Node, Topic
 from nodes.messages import prepare_pose_stamped_msg, prepare_sentence_action_goal
 from debug.debug import debug, DBGLevel
+from item.item import ItemPlacement
 
 
 class UsageTableNode(Node):
@@ -25,8 +26,8 @@ class UsageTableNode(Node):
 
     language_usage_table = "en"
     translation_usage_table = Node
-    language_usage = "en"
-    translation_usage = Node
+    language_table = "en"
+    translation_table = Node
 
     def __init__(self,
                  node_name="UsageIntelligentTable",
@@ -81,13 +82,13 @@ class UsageTableNode(Node):
             self.translation_usage_table = translation
 
         # Language of messages incoming from table
-        self.language_usage = language_usage_table
-        if self.language_usage == "en":
+        self.language_table = language_usage_table
+        if self.language_table == "en":
             from languages import en as translation
-            self.translation_usage = translation
+            self.translation_table = translation
         else:
             from languages import en as translation
-            self.translation_usage = translation
+            self.translation_table = translation
 
         # Run node
         super(UsageTableNode, self).__init__(node_name, subscribed_topics, published_topics)
@@ -221,10 +222,11 @@ class UsageTableNode(Node):
         return 0
 
     def check_item_inside_table(self, item):
-        if self.item_location == "Center of table" or self.item_location == "Side of table":
+        if self.item_location == self.translation_table.itemPlacementTranslationDict[ItemPlacement.center] or \
+                self.item_location == self.translation_table.itemPlacementTranslationDict[ItemPlacement.side]:
             debug(DBGLevel.INFO, "Item " + item + " has been placed")
             return 0
-        elif self.item_location == "Edge of table":
+        elif self.item_location == self.translation_table.itemPlacementTranslationDict[ItemPlacement.edge]:
             debug(DBGLevel.WARN,
                   "Item " + item + " has been placed on the edge of the table - correct its position")
             self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["position"])
