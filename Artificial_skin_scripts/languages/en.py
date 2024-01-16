@@ -2,6 +2,24 @@ from item.item import ItemType, ItemPlacement
 from nodes.node_core import NodeStatus
 from nodes.table import TableStatus
 
+##### Node #####
+nodeStatusTranslationDictionary = {
+        NodeStatus.unknown:            "Unknown",
+        NodeStatus.initializing:       "Initializing",
+        NodeStatus.working:            "Working",
+
+        NodeStatus.crashed:            "Crashed unknown",
+        NodeStatus.crashed_internal:   "Crashed internal",
+        NodeStatus.crashed_connection: "Crashed communication",
+        NodeStatus.crashed_ros:        "Crashed ROS",
+
+        TableStatus.table_off:         "Working off",
+        TableStatus.table_working:     "Working on",
+        TableStatus.table_calibrating: "Working calibrating",
+}
+##### Node #####
+
+##### Table Node #####
 itemTranslationDict = {
         ItemType.book:        "Book",
         ItemType.food_tray:   "Food tray",
@@ -28,22 +46,9 @@ itemPlacementTranslationDict = {
         ItemPlacement.partially_out: "Out of table",
         ItemPlacement.unknown:       "Nothing",
 }
+##### Table Node #####
 
-nodeStatusTranslationDictionary = {
-        NodeStatus.unknown:            "Unknown",
-        NodeStatus.initializing:       "Initializing",
-        NodeStatus.working:            "Working",
-
-        NodeStatus.crashed:            "Crashed unknown",
-        NodeStatus.crashed_internal:   "Crashed internal",
-        NodeStatus.crashed_connection: "Crashed communication",
-        NodeStatus.crashed_ros:        "Crashed ROS",
-
-        TableStatus.table_off:         "Working off",
-        TableStatus.table_working:     "Working on",
-        TableStatus.table_calibrating: "Working calibrating",
-}
-
+##### Usage of table node #####
 usageIntelligentTableDictionary = {
         # Locations
         "kitchen_D": "the kitchen ",
@@ -73,4 +78,6 @@ usageIntelligentTableDictionary = {
         # Tasks
         "deliver_tea": "The tea has been delivered ",
         "deliver_dish": "The dish has been delivered ",
+        "abort": "Task aborted ",
 }
+##### Usage of table node #####

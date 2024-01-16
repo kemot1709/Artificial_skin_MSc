@@ -24,12 +24,10 @@ if __name__ == "__main__":
 
             if command == "przywieź mi herbatę" or ("bring" in command and "tea" in command):
                 if usage_node.handle_give_tea_command() != 0:
-                    # task_completed_behaviour(usage_node, "Zadanie przerwano")
-                    usage_node.task_completed_behaviour("Task aborted")
+                    usage_node.abort_task()
             elif command == "odwieź kubek do kuchni" or ("take" in command and "empty" in command):
                 if usage_node.handle_drop_mug_command() != 0:
-                    # task_completed_behaviour(usage_node, "Zadanie przerwano")
-                    usage_node.task_completed_behaviour("Task aborted")
+                    usage_node.abort_task()
             else:
                 pass
 

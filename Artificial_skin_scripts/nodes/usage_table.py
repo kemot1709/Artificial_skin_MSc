@@ -1,6 +1,5 @@
 import time
 import os
-import string
 
 # Suppress tensorflow noncritical warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -10,7 +9,7 @@ from geometry_msgs.msg import PoseStamped
 from move_base_msgs.msg import MoveBaseActionResult
 from tiago_msgs.msg import SaySentenceActionGoal
 
-from nodes.node_core import Node, NodeStatus, Topic
+from nodes.node_core import Node, Topic
 from nodes.messages import prepare_pose_stamped_msg, prepare_sentence_action_goal
 from debug.debug import debug, DBGLevel
 
@@ -24,9 +23,15 @@ class UsageTableNode(Node):
     command_arrived = False
     command = ""
 
+    language_usage_table = "en"
+    translation_usage_table = Node
+    language_usage = "en"
+    translation_usage = Node
+
     def __init__(self,
                  node_name="UsageIntelligentTable",
-                 language="en"
+                 language_usage_table="en",
+                 language_table="en"
                  ):
         # Initialize internal variables
         self.item_placed_status = False
@@ -63,8 +68,29 @@ class UsageTableNode(Node):
         ret = Topic("/rico_says/goal", SaySentenceActionGoal)  # Rico will say that thing
         published_topics.append(ret)
 
+        # Language of messages that robot says
+        self.language_usage_table = language_usage_table
+        if self.language_usage_table == "en":
+            from languages import en as translation
+            self.translation_usage_table = translation
+        elif self.language_usage_table == "pl":
+            from languages import pl as translation
+            self.translation_usage_table = translation
+        else:
+            from languages import en as translation
+            self.translation_usage_table = translation
+
+        # Language of messages incoming from table
+        self.language_usage = language_usage_table
+        if self.language_usage == "en":
+            from languages import en as translation
+            self.translation_usage = translation
+        else:
+            from languages import en as translation
+            self.translation_usage = translation
+
         # Run node
-        super(UsageTableNode, self).__init__(node_name, subscribed_topics, published_topics, language=language)
+        super(UsageTableNode, self).__init__(node_name, subscribed_topics, published_topics)
         debug(DBGLevel.CRITICAL, "Usage table node has been initialized")
 
     def item_placed_callback(self, data=None):
@@ -145,23 +171,23 @@ class UsageTableNode(Node):
     def go_to_position(self, position):
         # TODO enum with possible Poses
         if position == "kitchen":
-            position_translate = self.translation.usageIntelligentTableDictionary["kitchen_D"]
+            position_translate = self.translation_usage_table.usageIntelligentTableDictionary["kitchen_D"]
             goal = self.get_pose_kitchen()
         elif position == "table":
-            position_translate = self.translation.usageIntelligentTableDictionary["table_D"]
+            position_translate = self.translation_usage_table.usageIntelligentTableDictionary["table_D"]
             goal = self.get_pose_table()
         elif position == "dock":
-            position_translate = self.translation.usageIntelligentTableDictionary["dock_D"]
+            position_translate = self.translation_usage_table.usageIntelligentTableDictionary["dock_D"]
             goal = self.get_pose_docker()
         elif position == "default":
-            position_translate = self.translation.usageIntelligentTableDictionary["default_D"]
+            position_translate = self.translation_usage_table.usageIntelligentTableDictionary["default_D"]
             goal = self.get_pose_default()
         else:
-            position_translate = self.translation.usageIntelligentTableDictionary["idk_D"]
+            position_translate = self.translation_usage_table.usageIntelligentTableDictionary["idk_D"]
             goal = self.get_pose_default()
 
         debug(DBGLevel.INFO, "I go to the " + position)
-        self.robot_say_sth(self.translation.usageIntelligentTableDictionary["drive"] + position_translate)
+        self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["drive"] + position_translate)
 
         self.publish_msg_on_topic("/move_base_simple/goal", goal)
         self.move_status = 0  # Have to reset move status after publishing message
@@ -176,7 +202,8 @@ class UsageTableNode(Node):
                 # Failure
                 else:
                     self.robot_say_sth(
-                        self.translation.usageIntelligentTableDictionary["not_arrived"] + position_translate)
+                        self.translation_usage_table.usageIntelligentTableDictionary[
+                            "not_arrived"] + position_translate)
                     debug(DBGLevel.ERROR, "Cannot arrive to the " + position + " Code: " + str(self.move_status))
                     return 1
 
@@ -200,12 +227,12 @@ class UsageTableNode(Node):
         elif self.item_location == "Edge of table":
             debug(DBGLevel.WARN,
                   "Item " + item + " has been placed on the edge of the table - correct its position")
-            self.robot_say_sth(self.translation.usageIntelligentTableDictionary["position"])
+            self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["position"])
             time.sleep(5)
             return 1
         else:
             debug(DBGLevel.ERROR, "Item " + item + " couldn't be placed od the table")
-            self.robot_say_sth(self.translation.usageIntelligentTableDictionary["not_placed"])
+            self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["not_placed"])
             return 2
 
     def check_item_in_weight_range(self, item):
@@ -219,21 +246,21 @@ class UsageTableNode(Node):
         if expected_weight * 0.6 < self.item_weight < expected_weight * 1.5:
             return 0
         else:
-            self.robot_say_sth(self.translation.usageIntelligentTableDictionary["weight"])
+            self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["weight"])
             debug(DBGLevel.ERROR, "Item " + item + " have wrong weight: " + str(self.item_weight))
             time.sleep(5)
             return 1
 
     def wait_for_item_placed(self, item):
         if item == "tea":
-            item_translate = self.translation.usageIntelligentTableDictionary["tea_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["tea_B"]
         elif item == "empty dish":
-            item_translate = self.translation.usageIntelligentTableDictionary["dish_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["dish_B"]
         else:
-            item_translate = self.translation.usageIntelligentTableDictionary["sth_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["sth_B"]
 
         debug(DBGLevel.INFO, "I wait for " + item + " to be placed")
-        self.robot_say_sth(self.translation.usageIntelligentTableDictionary["give"] + item_translate)
+        self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["give"] + item_translate)
 
         # TODO check weight and item type
         i = 0
@@ -250,26 +277,26 @@ class UsageTableNode(Node):
                 if self.check_item_in_weight_range(item) != 0:
                     continue
 
-                self.robot_say_sth(self.translation.usageIntelligentTableDictionary["thanks"])
+                self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["thanks"])
                 time.sleep(2)
                 return 0
 
     def wait_for_item_taken(self, item):
         if item == "tea":
-            item_translate = self.translation.usageIntelligentTableDictionary["tea_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["tea_B"]
         elif item == "empty dish":
-            item_translate = self.translation.usageIntelligentTableDictionary["dish_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["dish_B"]
         else:
-            item_translate = self.translation.usageIntelligentTableDictionary["sth_B"]
+            item_translate = self.translation_usage_table.usageIntelligentTableDictionary["sth_B"]
 
         debug(DBGLevel.INFO, "I wait for " + item + " to be taken")
-        self.robot_say_sth(self.translation.usageIntelligentTableDictionary["take"] + item_translate)
+        self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["take"] + item_translate)
 
         while 1:
             if self.item_placed_status is False:
                 debug(DBGLevel.INFO, "Item " + item + " has been taken")
 
-                self.robot_say_sth(self.translation.usageIntelligentTableDictionary["thanks"])
+                self.robot_say_sth(self.translation_usage_table.usageIntelligentTableDictionary["thanks"])
                 time.sleep(2)
                 return 0
             time.sleep(1)
@@ -292,7 +319,8 @@ class UsageTableNode(Node):
             return -1
 
         # End task
-        if self.task_completed_behaviour(self.translation.usageIntelligentTableDictionary["deliver_tea"]) != 0:
+        if self.task_completed_behaviour(
+                self.translation_usage_table.usageIntelligentTableDictionary["deliver_tea"]) != 0:
             return -1
         return 0
 
@@ -314,6 +342,10 @@ class UsageTableNode(Node):
             return -1
 
         # End task
-        if self.task_completed_behaviour(self.translation.usageIntelligentTableDictionary["deliver_dish"]) != 0:
+        if self.task_completed_behaviour(
+                self.translation_usage_table.usageIntelligentTableDictionary["deliver_dish"]) != 0:
             return -1
         return 0
+
+    def abort_task(self):
+        self.task_completed_behaviour(self.translation_usage_table.usageIntelligentTableDictionary["abort"])
