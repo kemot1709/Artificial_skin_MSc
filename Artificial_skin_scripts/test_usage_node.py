@@ -361,19 +361,17 @@ if __name__ == "__main__":
         # Wait for commands
         if g_command_arrived:
             g_command_arrived = False
-            if g_command != "":
-                debug(DBGLevel.DETAILS, g_command)
-            g_command = ignore_punctuation_marks(g_command)
+            g_command = ignore_punctuation_marks(g_command).lower()
 
-            if g_command == "Przywieź mi herbatę" or g_command == "Bring me a cup of tea" or "tea" in g_command:
+            if g_command == "przywieź mi herbatę" or ("bring" in g_command and "tea" in g_command):
                 if handle_give_tea_command(usage_node) != 0:
                     # task_completed_behaviour(usage_node, "Zadanie przerwano")
                     task_completed_behaviour(usage_node, "Task aborted")
-            elif g_command == "Odwieź kubek do kuchni" or "mug" in g_command or "kubek" in g_command:
+            elif g_command == "odwieź kubek do kuchni" or ("take" in g_command and "mug" in g_command):
                 if handle_drop_mug_command(usage_node) != 0:
                     # task_completed_behaviour(usage_node, "Zadanie przerwano")
                     task_completed_behaviour(usage_node, "Task aborted")
             else:
-                debug(DBGLevel.WARN, g_command)
+                pass
 
         time.sleep(1)
