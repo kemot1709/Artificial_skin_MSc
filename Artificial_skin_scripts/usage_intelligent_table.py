@@ -199,6 +199,7 @@ def go_to_position(node, position):
 
 def task_completed_behaviour(node, message):
     robot_say_sth(node, message)
+    debug(DBGLevel.ERROR, message)
     if go_to_position(node, "default"):
         return -1
     return 0
@@ -218,7 +219,7 @@ def check_item_inside_table(node, item):
               "Item " + item + " has been placed on the edge of the table - correct its position")
         robot_say_sth(node, "Please correct the position of the object")
         # robot_say_sth(node, "Proszę popraw położenie przedmiotu")
-        time.sleep(10)
+        time.sleep(5)
         return 1
     else:
         debug(DBGLevel.ERROR, "Item " + item + " couldn't be placed od the table")
@@ -241,7 +242,7 @@ def check_item_in_weight_range(node, item):
         # robot_say_sth(node, "Przedmiot ma nieprawidłową wagę, czy to jest prawidłowy przedmiot?")
         robot_say_sth(node, "The item has an incorrect weight, is it the correct item?")
         debug(DBGLevel.ERROR, "Item " + item + " have wrong weight: " + str(g_item_weight))
-        time.sleep(10)
+        time.sleep(5)
         return 1
 
 
@@ -255,7 +256,7 @@ def wait_for_item_placed(node, item):
 
     debug(DBGLevel.INFO, "I wait for " + item + " to be placed")
     # robot_say_sth(node, "Podaj proszę " + pl_item)
-    robot_say_sth(node, "Could you give me " + pl_item)
+    robot_say_sth(node, "Could you give me " + item)
 
     # TODO check weight and item type
     i = 0
@@ -287,7 +288,7 @@ def wait_for_item_taken(node, item):
 
     debug(DBGLevel.INFO, "I wait for " + item + " to be taken")
     # robot_say_sth(node, "Odbierz proszę " + pl_item)
-    robot_say_sth(node, "Please take " + pl_item)
+    robot_say_sth(node, "Please take " + item)
 
     while 1:
         if g_item_placed_status is False:
@@ -329,7 +330,7 @@ def handle_drop_mug_command(node):
         return -1
 
     # Take mug from task giver
-    if not wait_for_item_placed(node, "empty dish"):
+    if wait_for_item_placed(node, "empty dish"):
         return -1
 
     # Go to kitchen
@@ -337,7 +338,7 @@ def handle_drop_mug_command(node):
         return -1
 
     # Acknowledge mug take off
-    if not wait_for_item_taken(node, "empty dish"):
+    if wait_for_item_taken(node, "empty dish"):
         return -1
 
     # End task
@@ -367,7 +368,7 @@ if __name__ == "__main__":
                 if handle_give_tea_command(usage_node) != 0:
                     # task_completed_behaviour(usage_node, "Zadanie przerwano")
                     task_completed_behaviour(usage_node, "Task aborted")
-            elif g_command == "odwieź kubek do kuchni" or ("take" in g_command and "mug" in g_command):
+            elif g_command == "odwieź kubek do kuchni" or ("take" in g_command and "empty" in g_command):
                 if handle_drop_mug_command(usage_node) != 0:
                     # task_completed_behaviour(usage_node, "Zadanie przerwano")
                     task_completed_behaviour(usage_node, "Task aborted")
