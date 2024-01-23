@@ -50,17 +50,38 @@ hyprb_best3 = [A, B, C];
 figure(1)
 hold on;
 
-errorbar(x1, y1, y1_dn, y1_up, x_0err, x_0err, 'ob', 'DisplayName', 'Pole 1x1 cm')
-plot(x1, hyprb(hyprb_best1, x1), '--b', 'DisplayName', 'Pole 1x1 cm - aproksymacja')
-errorbar(x2, y2, y2_dn, y2_up, x_0err, x_0err, 'xr', 'DisplayName', 'Pole 1x2 cm')
-plot(x2, hyprb(hyprb_best2, x2), '--r', 'DisplayName', 'Pole 1x2 cm - aproksymacja')
-errorbar(x3, y3, y3_dn, y3_up, x_0err, x_0err, 'pg', 'DisplayName', 'Pole 2x2 cm')
-plot(x3, hyprb(hyprb_best3, x3), '--g', 'DisplayName', 'Pole 2x2 cm - aproksymacja')
+% errorbar(x1, y1, y1_dn, y1_up, x_0err, x_0err, 'ob', 'DisplayName', 'Pole 1x1 cm')
+% plot(x1, hyprb(hyprb_best1, x1), '--b', 'DisplayName', 'Pole 1x1 cm - aproksymacja')
+% errorbar(x2, y2, y2_dn, y2_up, x_0err, x_0err, 'xr', 'DisplayName', 'Pole 1x2 cm')
+% plot(x2, hyprb(hyprb_best2, x2), '--r', 'DisplayName', 'Pole 1x2 cm - aproksymacja')
+% errorbar(x3, y3, y3_dn, y3_up, x_0err, x_0err, 'pg', 'DisplayName', 'Pole 2x2 cm')
+% plot(x3, hyprb(hyprb_best3, x3), '--g', 'DisplayName', 'Pole 2x2 cm - aproksymacja')
+
+errorbar(x1, y1, y1_dn, y1_up, x_0err, x_0err, 'ob', 'DisplayName', 'Field 1x1 cm')
+plot(x1, hyprb(hyprb_best1, x1), '--b', 'DisplayName', 'Field 1x1 cm - approximation')
+errorbar(x2, y2, y2_dn, y2_up, x_0err, x_0err, 'xr', 'DisplayName', 'Field 1x2 cm')
+plot(x2, hyprb(hyprb_best2, x2), '--r', 'DisplayName', 'Field 1x2 cm - approximation')
+errorbar(x3, y3, y3_dn, y3_up, x_0err, x_0err, 'pg', 'DisplayName', 'Field 2x2 cm')
+plot(x3, hyprb(hyprb_best3, x3), '--g', 'DisplayName', 'Field 2x2 cm - approximation')
+
 
 hold off
 grid
 legend('Location', 'Best');
-xlabel('Si³a nacisku [g]')
-ylabel('Rezystancja [$\Omega$]', 'Interpreter', 'latex')
+% xlabel('Si³a nacisku [g]')
+xlabel('Object weight [g]')
+% ylabel('Rezystancja [$\Omega$]', 'Interpreter', 'latex')
+ylabel('Resistance [$\Omega$]', 'Interpreter', 'latex')
+title('Resistance of a single tactile field as a function of applied weight')
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
+
+set(gcf, 'Position', [0,0,700,350])
+ax = gca;
+outerpos = ax.OuterPosition;
+ti = ax.TightInset; 
+left = outerpos(1) + ti(1);
+bottom = outerpos(2) + ti(2);
+ax_width = outerpos(3) - ti(1) - ti(3);
+ax_height = outerpos(4) - ti(2) - ti(4);
+ax.Position = [left bottom ax_width ax_height];
