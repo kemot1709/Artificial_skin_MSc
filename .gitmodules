@@ -1,3 +1,6 @@
+[submodule "Artificial_skin_Smart_Table"]
+	path = Artificial_skin_Smart_Table
+	url = https://github.com/kemot1709/smart_table
 [submodule "Artificial_skin_thesis"]
 	path = Artificial_skin_thesis
 	url = https://git@git.overleaf.com/646fb7a9aa984ec66cee366a
