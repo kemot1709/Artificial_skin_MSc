@@ -2,6 +2,10 @@
 
 I do not recommend compiling this code on your own. Prepare to spend at least one week to set up the environment.
 
+## Caution
+
+Hex file on this repository has been compiled few months after physical upload into board. Therefore, there is small chance that this code is slightly different that the one currently working on board. 
+
 ## HEX file upload
 
 Prepare:
