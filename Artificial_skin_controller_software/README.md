@@ -4,13 +4,13 @@ I do not recommend compiling this code on your own. Prepare to spend at least on
 
 ## Caution
 
-Hex file on this repository has been compiled few months after physical upload into board. Therefore, there is small chance that this code is slightly different that the one currently working on board. 
+Hex file on this repository has been compiled few months after physical upload into board. Therefore, there is small chance that this code is slightly different than the one currently working on board. 
 
 ## HEX file upload
 
 Prepare:
 - ST Link v2 programmer (can be cheap version)
-- STM32 ST-LINK Utility (https://www.st.com/en/development-tools/stsw-link004.html)
+- STM32 ST-LINK Utility (https://www.st.com/en/development-tools/stsw-link004.html), with this software it also should be possible to read memory of MCU (if not secured)
 - precompiled hex file (available in this repository)
 
 Upload:
