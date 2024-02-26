@@ -31,3 +31,4 @@ Some tips:
 - Then you should generate files with it, delete _Core_ directory and download this directory from repo again.
 - Now you should have _Drivers_ dir, _*.ld_ file and few other files.
 - Now you have to select IDE to compile this shit and follow its instructions about STM code compiling. Some are easier, some harder and I will not go further into this topic.
+- I used CLion and my method is based on this blog (https://blog.jetbrains.com/clion/2019/02/clion-2019-1-eap-clion-for-embedded-development-part-iii/), but I know that there are some tools for VSC (I didn't tested them)
