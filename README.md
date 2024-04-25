@@ -38,17 +38,23 @@ Keywords: TIAGo, ROS, Velostat, tactile sensor, smart table, assistive robot
 ## Content of this repository
 
 ### [3DPrints](Artificial_skin_3DPrints)
+Models used during development of this thesis including all made 3D prints.
 
 ### [Electronics](Artificial_skin_Electronics)
+Project of an electronics responsible for controlling Smart Table pressure sensor.
 
-### [Smart Table ROS node](Artificial_skin_Smart_Table)
+### [Smart Table ROS node](https://github.com/kemot1709/smart_table/tree/master)
+ROS node that controlls software side of Smart Table and its communication with other part of the robot system.
+
+Running this node is described in detail in linked repository.
 
 ### [Matlab calculations](Artificial_skin_calculations)
+Matlab calculations, little messed. Repository also contains raw data that were used in calculations.
 
 ### [Microcontroller software](Artificial_skin_controller_software)
+Software for microcontroller that controlls Smart Table sensor.
 
 ### [Thesis sources](Artificial_skin_thesis)
-
-## Running Smart Table
+Sources for the full thesis. Sources are avalable on Overleaf and there are more permissions needed to access them.
 
 
